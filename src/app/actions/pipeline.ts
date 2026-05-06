@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAgencyUUID } from '@/lib/supabase/server'
 import type { ApplicationStage } from '@/lib/types'
 
 export async function createApplication(
@@ -10,18 +10,20 @@ export async function createApplication(
   universityId: string,
   stage: ApplicationStage = 'Lead'
 ) {
+  const agencyUuid = await getAgencyUUID(agencyId)
+  if (!agencyUuid) return { error: 'Unauthorized' }
   const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('application_pipeline')
-    .insert({ agency_id: agencyId, student_id: studentId, university_id: universityId, stage })
+    .insert({ agency_id: agencyUuid, student_id: studentId, university_id: universityId, stage })
     .select()
     .single()
 
   if (error) return { error: error.message }
 
   await supabase.from('financial_ledger').insert({
-    agency_id: agencyId,
+    agency_id: agencyUuid,
     pipeline_id: data.id,
     expected_commission: 0,
     status: 'Pending',
@@ -36,13 +38,15 @@ export async function updateStage(
   applicationId: string,
   stage: ApplicationStage
 ) {
+  const agencyUuid = await getAgencyUUID(agencyId)
+  if (!agencyUuid) return { error: 'Unauthorized' }
   const supabase = await createClient()
 
   const { error } = await supabase
     .from('application_pipeline')
     .update({ stage })
     .eq('id', applicationId)
-    .eq('agency_id', agencyId)
+    .eq('agency_id', agencyUuid)
 
   if (error) return { error: error.message }
   revalidatePath(`/app/${agencyId}/pipeline`)
@@ -50,6 +54,8 @@ export async function updateStage(
 }
 
 export async function getPipeline(agencyId: string) {
+  const agencyUuid = await getAgencyUUID(agencyId)
+  if (!agencyUuid) return []
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -59,7 +65,7 @@ export async function getPipeline(agencyId: string) {
       student:student_profiles(id, full_name, gpa, ielts_score, degree_level, nationality),
       university:partner_universities(id, name, country, commission_rate)
     `)
-    .eq('agency_id', agencyId)
+    .eq('agency_id', agencyUuid)
     .order('created_at', { ascending: false })
 
   if (error) return []
@@ -67,13 +73,22 @@ export async function getPipeline(agencyId: string) {
 }
 
 export async function getDashboardStats(agencyId: string) {
+  const agencyUuid = await getAgencyUUID(agencyId)
+  if (!agencyUuid) return {
+    totalStudents: 0,
+    totalApplications: 0,
+    stageCounts: {},
+    pendingTasks: [],
+    totalRevenue: 0,
+    pendingRevenue: 0,
+  }
   const supabase = await createClient()
 
   const [students, pipeline, tasks, ledger] = await Promise.all([
-    supabase.from('student_profiles').select('id', { count: 'exact', head: true }).eq('agency_id', agencyId),
-    supabase.from('application_pipeline').select('id, stage').eq('agency_id', agencyId),
-    supabase.from('task_dispatcher').select('id, status, title, due_date, assigned_to_id').eq('agency_id', agencyId).eq('status', 'Pending').order('due_date', { ascending: true }).limit(5),
-    supabase.from('financial_ledger').select('expected_commission, status').eq('agency_id', agencyId),
+    supabase.from('student_profiles').select('id', { count: 'exact', head: true }).eq('agency_id', agencyUuid),
+    supabase.from('application_pipeline').select('id, stage').eq('agency_id', agencyUuid),
+    supabase.from('task_dispatcher').select('id, status, title, due_date, assigned_to_id').eq('agency_id', agencyUuid).eq('status', 'Pending').order('due_date', { ascending: true }).limit(5),
+    supabase.from('financial_ledger').select('expected_commission, status').eq('agency_id', agencyUuid),
   ])
 
   const stageCounts = (pipeline.data ?? []).reduce<Record<string, number>>((acc, app) => {

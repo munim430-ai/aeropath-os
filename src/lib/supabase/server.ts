@@ -48,3 +48,21 @@ export async function createAdminClient() {
     }
   )
 }
+export async function getAgencyUUID(subdomain?: string) {
+  const supabase = await createClient()
+  const { data: { user: authUser } } = await supabase.auth.getUser()
+  if (!authUser) return null
+
+  const { data: dbUser } = await supabase
+    .from('users')
+    .select('agency_id, agencies(subdomain)')
+    .eq('auth_id', authUser.id)
+    .single()
+
+  if (!dbUser) return null
+  
+  const agency = (dbUser as any).agencies
+  if (subdomain && agency.subdomain !== subdomain) return null
+
+  return dbUser.agency_id as string
+}

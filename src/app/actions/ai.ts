@@ -2,7 +2,7 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAgencyUUID } from '@/lib/supabase/server'
 import type { AIExtractedData, EligibilityResult } from '@/lib/types'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
@@ -51,12 +51,14 @@ export async function saveDocumentWithAI(
   type: string,
   ocrText: string
 ) {
+  const agencyUuid = await getAgencyUUID(agencyId)
+  if (!agencyUuid) return { error: 'Unauthorized' }
   const supabase = await createClient()
 
   const aiData = await extractDocumentData(ocrText)
 
   const { data: doc, error } = await supabase.from('document_vault').insert({
-    agency_id: agencyId,
+    agency_id: agencyUuid,
     student_id: studentId,
     type,
     file_url: fileUrl,
@@ -76,7 +78,7 @@ export async function saveDocumentWithAI(
       .from('student_profiles')
       .update(updates)
       .eq('id', studentId)
-      .eq('agency_id', agencyId)
+      .eq('agency_id', agencyUuid)
   }
 
   revalidatePath(`/app/${agencyId}/students/${studentId}`)
@@ -87,6 +89,8 @@ export async function getEligibleUniversities(
   agencyId: string,
   studentId: string
 ): Promise<EligibilityResult[]> {
+  const agencyUuid = await getAgencyUUID(agencyId)
+  if (!agencyUuid) return []
   const supabase = await createClient()
 
   const [{ data: student }, { data: universities }] = await Promise.all([
@@ -94,12 +98,12 @@ export async function getEligibleUniversities(
       .from('student_profiles')
       .select('gpa, ielts_score, degree_level')
       .eq('id', studentId)
-      .eq('agency_id', agencyId)
+      .eq('agency_id', agencyUuid)
       .single(),
     supabase
       .from('partner_universities')
       .select('*')
-      .or(`agency_id.eq.${agencyId},agency_id.is.null`),
+      .or(`agency_id.eq.${agencyUuid},agency_id.is.null`),
   ])
 
   if (!student || !universities) return []

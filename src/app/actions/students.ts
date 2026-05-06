@@ -1,13 +1,15 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAgencyUUID } from '@/lib/supabase/server'
 
 export async function createStudent(agencyId: string, formData: FormData) {
+  const agencyUuid = await getAgencyUUID(agencyId)
+  if (!agencyUuid) return { error: 'Unauthorized' }
   const supabase = await createClient()
 
   const { error } = await supabase.from('student_profiles').insert({
-    agency_id: agencyId,
+    agency_id: agencyUuid,
     full_name: formData.get('full_name') as string,
     email: formData.get('email') as string,
     phone: formData.get('phone') as string,
@@ -27,6 +29,8 @@ export async function updateStudent(
   studentId: string,
   formData: FormData
 ) {
+  const agencyUuid = await getAgencyUUID(agencyId)
+  if (!agencyUuid) return { error: 'Unauthorized' }
   const supabase = await createClient()
 
   const { error } = await supabase
@@ -41,7 +45,7 @@ export async function updateStudent(
       ielts_score: formData.get('ielts_score') ? Number(formData.get('ielts_score')) : null,
     })
     .eq('id', studentId)
-    .eq('agency_id', agencyId)
+    .eq('agency_id', agencyUuid)
 
   if (error) return { error: error.message }
   revalidatePath(`/app/${agencyId}/students/${studentId}`)
@@ -50,12 +54,14 @@ export async function updateStudent(
 }
 
 export async function getStudents(agencyId: string, search?: string) {
+  const agencyUuid = await getAgencyUUID(agencyId)
+  if (!agencyUuid) return []
   const supabase = await createClient()
 
   let query = supabase
     .from('student_profiles')
     .select('*')
-    .eq('agency_id', agencyId)
+    .eq('agency_id', agencyUuid)
     .order('created_at', { ascending: false })
 
   if (search) query = query.ilike('full_name', `%${search}%`)
@@ -66,13 +72,15 @@ export async function getStudents(agencyId: string, search?: string) {
 }
 
 export async function getStudent(agencyId: string, studentId: string) {
+  const agencyUuid = await getAgencyUUID(agencyId)
+  if (!agencyUuid) return null
   const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('student_profiles')
     .select('*')
     .eq('id', studentId)
-    .eq('agency_id', agencyId)
+    .eq('agency_id', agencyUuid)
     .single()
 
   if (error) return null
