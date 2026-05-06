@@ -19,6 +19,7 @@ export interface Agency {
   subdomain: string
   logo_url: string | null
   primary_color: string
+  website: string | null
   created_at: string
 }
 

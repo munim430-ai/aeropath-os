@@ -104,7 +104,10 @@ export async function getDashboardStats(agencyId: string) {
     .filter((l) => l.status === 'Pending')
     .reduce((sum, l) => sum + (l.expected_commission ?? 0), 0)
 
+  const { data: agency } = await supabase.from('agencies').select('*').eq('id', agencyUuid).single()
+
   return {
+    agency,
     totalStudents: students.count ?? 0,
     totalApplications: pipeline.data?.length ?? 0,
     stageCounts,

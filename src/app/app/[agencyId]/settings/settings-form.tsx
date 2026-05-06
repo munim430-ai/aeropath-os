@@ -36,6 +36,7 @@ export function SettingsForm({ agency }: { agency: Agency }) {
       .from('agencies')
       .update({
         name: formData.get('name') as string,
+        website: formData.get('website') as string,
         primary_color: formData.get('primary_color') as string,
         logo_url: logoUrl,
       })
@@ -55,6 +56,13 @@ export function SettingsForm({ agency }: { agency: Agency }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Input name="name" label="Agency Name" defaultValue={agency.name} required />
+      
+      <Input 
+        name="website" 
+        label="Official Website URL" 
+        defaultValue={agency.website || ''} 
+        placeholder="https://example.com"
+      />
 
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-medium text-[#A0A0A0]">Logo</label>

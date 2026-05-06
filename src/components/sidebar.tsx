@@ -13,6 +13,7 @@ import {
   LogOut,
   GraduationCap,
   Search,
+  Globe,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -51,7 +52,20 @@ export function Sidebar({ agency, user }: SidebarProps) {
             {getInitials(agency.name)}
           </div>
         )}
-        <span className="text-sm font-semibold text-[#F5F5F5] truncate">{agency.name}</span>
+        <div className="flex-1 min-w-0">
+          <span className="text-sm font-semibold text-[#F5F5F5] truncate block">{agency.name}</span>
+          {agency.website && (
+            <a 
+              href={agency.website.startsWith('http') ? agency.website : `https://${agency.website}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] text-[#606060] hover:text-[var(--tenant-primary)] transition-colors flex items-center gap-1 mt-0.5"
+            >
+              <Globe className="h-2.5 w-2.5" />
+              Visit Website
+            </a>
+          )}
+        </div>
       </div>
 
       {/* Search hint */}

@@ -1,8 +1,9 @@
 import { getDashboardStats } from '@/app/actions/pipeline'
+import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDate, stageColor } from '@/lib/utils'
-import { Users, Layers, DollarSign, CheckSquare, TrendingUp, Clock } from 'lucide-react'
+import { Users, Layers, DollarSign, CheckSquare, TrendingUp, Clock, Globe } from 'lucide-react'
 
 export default async function DashboardPage({
   params,
@@ -24,7 +25,7 @@ export default async function DashboardPage({
       </div>
 
       {/* KPI row */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <StatCard
           icon={Users}
           label="Total Students"
@@ -48,6 +49,14 @@ export default async function DashboardPage({
           label="Pending Commission"
           value={formatCurrency(stats.pendingRevenue)}
           color="#f59e0b"
+        />
+        <StatCard
+          icon={Globe}
+          label="Agency Website"
+          value={stats.agency?.website || 'Not Set'}
+          color="#a855f7"
+          isLink={!!stats.agency?.website}
+          href={stats.agency?.website}
         />
       </div>
 
@@ -124,22 +133,31 @@ function StatCard({
   label,
   value,
   color,
+  isLink,
+  href,
 }: {
   icon: React.ElementType
   label: string
   value: string
   color: string
+  isLink?: boolean
+  href?: string | null
 }) {
-  return (
-    <Card>
+  const content = (
+    <Card className={isLink ? "hover:border-[var(--tenant-primary)]/50 transition-colors" : ""}>
       <CardContent className="pt-5">
         <div className="flex items-start justify-between">
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="text-xs text-[#A0A0A0]">{label}</p>
-            <p className="mt-1.5 text-2xl font-bold text-[#F5F5F5] tracking-tight">{value}</p>
+            <p className={cn(
+              "mt-1.5 text-2xl font-bold text-[#F5F5F5] tracking-tight truncate",
+              isLink && "text-[var(--tenant-primary)]"
+            )}>
+              {value}
+            </p>
           </div>
           <div
-            className="flex h-9 w-9 items-center justify-center rounded-[8px]"
+            className="flex h-9 w-9 items-center justify-center rounded-[8px] shrink-0"
             style={{ backgroundColor: `${color}20` }}
           >
             <Icon className="h-4.5 w-4.5" style={{ color }} />
@@ -148,4 +166,14 @@ function StatCard({
       </CardContent>
     </Card>
   )
+
+  if (isLink && href) {
+    return (
+      <a href={href.startsWith('http') ? href : `https://${href}`} target="_blank" rel="noopener noreferrer">
+        {content}
+      </a>
+    )
+  }
+
+  return content
 }

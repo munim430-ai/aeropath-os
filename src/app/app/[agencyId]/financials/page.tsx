@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { DollarSign } from 'lucide-react'
+import { LedgerItem } from './ledger-item'
 
 export default async function FinancialsPage({
   params,
@@ -59,30 +60,9 @@ export default async function FinancialsPage({
             </div>
           ) : (
             <div className="space-y-2">
-              {ledger.map((entry) => {
-                const pipeline = entry.pipeline as {
-                  stage: string
-                  student: { full_name: string } | null
-                  university: { name: string } | null
-                } | null
-
-                const statusColor = entry.status === 'Received' ? '#10b981' : entry.status === 'Cancelled' ? '#ef4444' : '#f59e0b'
-
-                return (
-                  <div key={entry.id} className="flex items-center gap-3 p-3 rounded-[8px] bg-[#1A1A1A]">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-[#F5F5F5]">
-                        {pipeline?.student?.full_name ?? 'Unknown'} → {pipeline?.university?.name ?? 'Unknown'}
-                      </p>
-                      <p className="text-xs text-[#606060]">{formatDate(entry.created_at)}</p>
-                    </div>
-                    <Badge color={statusColor}>{entry.status}</Badge>
-                    <span className="text-sm font-semibold text-[#F5F5F5]">
-                      {formatCurrency(entry.expected_commission)}
-                    </span>
-                  </div>
-                )
-              })}
+              {ledger.map((entry) => (
+                <LedgerItem key={entry.id} entry={entry} agencyId={agencyId} />
+              ))}
             </div>
           )}
         </CardContent>
