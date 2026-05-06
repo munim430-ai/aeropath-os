@@ -147,9 +147,8 @@ async function seed() {
   console.log('4/6 Creating partner universities...')
   const { data: uniData, error: uniError } = await supabase
     .from('partner_universities')
-    .upsert(
-      UNIVERSITIES.map((u) => ({ ...u, agency_id: agencyId })),
-      { onConflict: 'name' }
+    .insert(
+      UNIVERSITIES.map((u) => ({ ...u, agency_id: agencyId }))
     )
     .select()
   if (uniError) { console.error('University error:', uniError.message); process.exit(1) }
@@ -159,9 +158,8 @@ async function seed() {
   console.log('5/6 Creating student profiles...')
   const { data: studentData, error: studentError } = await supabase
     .from('student_profiles')
-    .upsert(
-      STUDENTS.map((s) => ({ ...s, agency_id: agencyId })),
-      { onConflict: 'email' }
+    .insert(
+      STUDENTS.map((s) => ({ ...s, agency_id: agencyId }))
     )
     .select()
   if (studentError) { console.error('Student error:', studentError.message); process.exit(1) }
