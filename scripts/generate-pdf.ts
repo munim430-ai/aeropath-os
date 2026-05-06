@@ -1,0 +1,109 @@
+import puppeteer from 'puppeteer'
+import fs from 'fs'
+import path from 'path'
+
+async function generatePDF() {
+  console.log('📄 Generating AeroPath_OS_Master_Guide.pdf...')
+  const browser = await puppeteer.launch({ headless: true })
+  const page = await browser.newPage()
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>AeroPath OS Master Guide</title>
+      <style>
+        body { font-family: 'Inter', -apple-system, sans-serif; color: #111; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 40px; }
+        h1 { color: #0A0A0A; font-size: 32px; border-bottom: 2px solid #6366f1; padding-bottom: 10px; margin-bottom: 20px; }
+        h2 { color: #6366f1; font-size: 24px; margin-top: 40px; }
+        h3 { color: #222; font-size: 20px; }
+        p { margin-bottom: 16px; color: #333; }
+        .highlight { background-color: #f3f4f6; padding: 15px; border-left: 4px solid #6366f1; margin: 20px 0; border-radius: 4px; }
+        ul { margin-bottom: 20px; }
+        li { margin-bottom: 8px; }
+        .page-break { page-break-after: always; }
+      </style>
+    </head>
+    <body>
+      <h1>AeroPath OS Master Guide</h1>
+      <p><em>The Ultimate Operating System for Education Consultancies</em></p>
+      
+      <h2>Section A: The Business Plan & Value Proposition</h2>
+      <h3>Target Market</h3>
+      <p>Education consulting agencies handling high-volume international student applications. These agencies typically process hundreds of documents per week, leading to administrative bottlenecks.</p>
+      
+      <h3>The Core Problem</h3>
+      <div class="highlight">
+        <p><strong>The manual document verification black hole.</strong> Consultants waste hundreds of hours manually reading transcripts, calculating GPAs, and cross-referencing them against constantly changing university requirements matrices.</p>
+      </div>
+      
+      <h3>The AeroPath Solution</h3>
+      <p>An AI-powered OS that extracts data from Honors transcripts and passports, cross-references it against university matrices, and auto-generates visa workflows. Utilizing Google's Gemini Flash AI, it completely removes the manual reading phase from student onboarding.</p>
+      
+      <h3>SaaS Pricing Model</h3>
+      <ul>
+        <li><strong>Core CRM Tier ($99/mo):</strong> Basic pipeline management, student portal, and document vault.</li>
+        <li><strong>AI Automation Tier ($299/mo):</strong> Includes AI OCR data extraction, automated university eligibility matrix matching, and advanced financial ledger tracking.</li>
+      </ul>
+
+      <div class="page-break"></div>
+
+      <h2>Section B: The Sales Pitch (How to Hook the Customer)</h2>
+      <h3>The "Aha" Moment</h3>
+      <p>Guide the sales rep to show the <strong>"Automated OCR to Eligibility"</strong> feature during the demo. Upload a complex <em>Bachelor of Science (Honors)</em> transcript and watch the CRM instantly extract the exact GPA and immediately filter the eligible partner universities based on real-time matrix rules.</p>
+      
+      <h3>Overcoming Objections</h3>
+      <div class="highlight">
+        <p><strong>Objection:</strong> "We already use Excel, it works fine."</p>
+        <p><strong>Rebuttal:</strong> "Excel is great for lists, but it doesn't track pending commissions automatically. Our Financial Dashboard integrates your application pipeline directly with your ledger. You'll never lose track of a $5,000 commission again because an application stage was forgotten."</p>
+      </div>
+
+      <div class="page-break"></div>
+
+      <h2>Section C: Agency Operating Manual</h2>
+      <h3>1. White-Label Setup</h3>
+      <p>Step-by-step on how the agency customizes the CRM:</p>
+      <ul>
+        <li>Navigate to <strong>Settings &gt; Branding</strong>.</li>
+        <li>Upload the agency logo (it securely stores in the Supabase <code>logos</code> bucket).</li>
+        <li>Select the primary brand color. The UI's "Deep Carbon" theme automatically adjusts its accents using <code>var(--tenant-primary)</code>.</li>
+      </ul>
+
+      <h3>2. The Morning Briefing</h3>
+      <p>How consultants should use the daily task dispatcher:</p>
+      <ul>
+        <li>Open the Command Palette (Cmd + K) and type "My Tasks".</li>
+        <li>Review all stalled applications in the Pipeline. The system automatically flags applications stuck in "Applied" for over 14 days.</li>
+      </ul>
+
+      <h3>3. Student Onboarding</h3>
+      <p>How the agency invites students to the branded portal:</p>
+      <ul>
+        <li>Click "Add Student" and send an email invite via Resend integration.</li>
+        <li>The student logs into their secure portal, uploads their Passport and IELTS scorecard.</li>
+        <li>The AI OCR parses the documents automatically, notifying the consultant when the file is verified.</li>
+      </ul>
+      
+      <p style="text-align: center; margin-top: 50px; font-size: 14px; color: #888;">
+        Generated by AeroPath OS • Automated Business Deployment
+      </p>
+    </body>
+    </html>
+  `
+
+  await page.setContent(htmlContent, { waitUntil: 'networkidle0' })
+  
+  const outputPath = path.join(process.cwd(), 'AeroPath_OS_Master_Guide.pdf')
+  await page.pdf({ 
+    path: outputPath, 
+    format: 'A4',
+    printBackground: true,
+    margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
+  })
+
+  await browser.close()
+  console.log('✅ PDF generated successfully at:', outputPath)
+}
+
+generatePDF().catch(console.error)

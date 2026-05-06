@@ -1,0 +1,151 @@
+import { getDashboardStats } from '@/app/actions/pipeline'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { formatCurrency, formatDate, stageColor } from '@/lib/utils'
+import { Users, Layers, DollarSign, CheckSquare, TrendingUp, Clock } from 'lucide-react'
+
+export default async function DashboardPage({
+  params,
+}: {
+  params: Promise<{ agencyId: string }>
+}) {
+  const { agencyId } = await params
+  const stats = await getDashboardStats(agencyId)
+
+  const stages = ['Lead', 'Docs', 'Applied', 'Visa', 'Enrolled'] as const
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-xl font-semibold text-[#F5F5F5]">Morning Briefing</h1>
+        <p className="text-sm text-[#606060] mt-0.5">
+          {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        </p>
+      </div>
+
+      {/* KPI row */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard
+          icon={Users}
+          label="Total Students"
+          value={stats.totalStudents.toString()}
+          color="#6366f1"
+        />
+        <StatCard
+          icon={Layers}
+          label="Active Applications"
+          value={stats.totalApplications.toString()}
+          color="#3b82f6"
+        />
+        <StatCard
+          icon={DollarSign}
+          label="Revenue Received"
+          value={formatCurrency(stats.totalRevenue)}
+          color="#10b981"
+        />
+        <StatCard
+          icon={TrendingUp}
+          label="Pending Commission"
+          value={formatCurrency(stats.pendingRevenue)}
+          color="#f59e0b"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* Pipeline funnel */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Pipeline Funnel</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {stages.map((stage) => {
+                const count = stats.stageCounts[stage] ?? 0
+                const max = Math.max(...stages.map((s) => stats.stageCounts[s] ?? 0), 1)
+                return (
+                  <div key={stage} className="flex items-center gap-3">
+                    <span className="w-20 text-xs text-[#A0A0A0] shrink-0">{stage}</span>
+                    <div className="flex-1 h-6 rounded-[4px] bg-[#1A1A1A] overflow-hidden">
+                      <div
+                        className="h-full rounded-[4px] transition-all"
+                        style={{
+                          width: `${(count / max) * 100}%`,
+                          backgroundColor: stageColor(stage),
+                          opacity: 0.8,
+                        }}
+                      />
+                    </div>
+                    <span className="w-6 text-right text-xs font-medium text-[#F5F5F5] shrink-0">
+                      {count}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pending tasks */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Pending Tasks</CardTitle>
+              <CheckSquare className="h-4 w-4 text-[#606060]" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {stats.pendingTasks.length === 0 ? (
+              <p className="text-sm text-[#606060] py-4 text-center">All clear — no pending tasks</p>
+            ) : (
+              <ul className="space-y-2.5">
+                {stats.pendingTasks.map((task) => (
+                  <li key={task.id} className="flex items-start gap-2.5 p-2.5 rounded-[8px] bg-[#1A1A1A]">
+                    <Clock className="h-3.5 w-3.5 text-[#f59e0b] shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-[#F5F5F5] truncate">{task.title}</p>
+                      {task.due_date && (
+                        <p className="text-xs text-[#606060]">Due {formatDate(task.due_date)}</p>
+                      )}
+                    </div>
+                    <Badge color="#f59e0b">Pending</Badge>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  color,
+}: {
+  icon: React.ElementType
+  label: string
+  value: string
+  color: string
+}) {
+  return (
+    <Card>
+      <CardContent className="pt-5">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs text-[#A0A0A0]">{label}</p>
+            <p className="mt-1.5 text-2xl font-bold text-[#F5F5F5] tracking-tight">{value}</p>
+          </div>
+          <div
+            className="flex h-9 w-9 items-center justify-center rounded-[8px]"
+            style={{ backgroundColor: `${color}20` }}
+          >
+            <Icon className="h-4.5 w-4.5" style={{ color }} />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
