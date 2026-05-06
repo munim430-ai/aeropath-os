@@ -15,6 +15,8 @@ const STAGES: ApplicationStage[] = ['Lead', 'Docs', 'Applied', 'Visa', 'Enrolled
 type Application = {
   id: string
   stage: ApplicationStage
+  intake: string | null
+  scholarship_amount: number | null
   student?: { full_name: string; gpa: number | null; ielts_score: number | null } | null
   university?: { name: string; country: string | null } | null
 }
@@ -113,6 +115,16 @@ export function KanbanBoard({ applications, agencyId }: KanbanBoardProps) {
                               {app.student?.ielts_score != null && (
                                 <Badge color="#3b82f6" className="text-[10px]">
                                   IELTS {app.student.ielts_score}
+                                </Badge>
+                              )}
+                              {app.intake && (
+                                <Badge color="#6366f1" className="text-[10px]">
+                                  {app.intake}
+                                </Badge>
+                              )}
+                              {app.scholarship_amount && app.scholarship_amount > 0 && (
+                                <Badge color="#10b981" className="text-[10px]">
+                                  ${app.scholarship_amount.toLocaleString()}
                                 </Badge>
                               )}
                             </div>

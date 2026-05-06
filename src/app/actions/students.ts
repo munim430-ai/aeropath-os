@@ -17,6 +17,9 @@ export async function createStudent(agencyId: string, formData: FormData) {
     degree_level: formData.get('degree_level') as string,
     gpa: formData.get('gpa') ? Number(formData.get('gpa')) : null,
     ielts_score: formData.get('ielts_score') ? Number(formData.get('ielts_score')) : null,
+    whatsapp_number: formData.get('whatsapp_number') as string,
+    preferred_country: formData.get('preferred_country') as string,
+    preferred_intake: formData.get('preferred_intake') as string,
   })
 
   if (error) return { error: error.message }
@@ -43,6 +46,9 @@ export async function updateStudent(
       degree_level: formData.get('degree_level') as string,
       gpa: formData.get('gpa') ? Number(formData.get('gpa')) : null,
       ielts_score: formData.get('ielts_score') ? Number(formData.get('ielts_score')) : null,
+      whatsapp_number: formData.get('whatsapp_number') as string,
+      preferred_country: formData.get('preferred_country') as string,
+      preferred_intake: formData.get('preferred_intake') as string,
     })
     .eq('id', studentId)
     .eq('agency_id', agencyUuid)

@@ -57,9 +57,15 @@ export default async function UniversitiesPage({
                       <Badge key={d} color="#6366f1">{d}</Badge>
                     ))}
                   </div>
-                  <p className="text-xs text-[#606060]">
+                  <p className="text-xs text-[#606060] mb-2">
                     Commission: <span className="text-[#F5F5F5] font-medium">{uni.commission_rate}%</span>
                   </p>
+                  {uni.scholarship_info && (
+                    <div className="pt-2 border-t border-[#2A2A2A]">
+                      <p className="text-[10px] text-[#A0A0A0] uppercase font-semibold mb-1">Scholarships</p>
+                      <p className="text-xs text-[#10b981] line-clamp-2">{uni.scholarship_info}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )

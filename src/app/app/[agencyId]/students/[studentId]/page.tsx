@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { getInitials, formatDate } from '@/lib/utils'
 import { DocumentUpload } from './document-upload'
-import { CheckCircle, XCircle, GraduationCap, FileText } from 'lucide-react'
+import { CheckCircle, XCircle, GraduationCap, FileText, MessageCircle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 export default async function StudentProfilePage({
   params,
@@ -43,7 +44,26 @@ export default async function StudentProfilePage({
         </Avatar>
         <div>
           <h1 className="text-xl font-semibold text-[#F5F5F5]">{student.full_name}</h1>
-          <p className="text-sm text-[#606060]">Added {formatDate(student.created_at)}</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <p className="text-sm text-[#606060]">Added {formatDate(student.created_at)}</p>
+            {student.preferred_intake && (
+              <Badge color="#6366f1" className="text-[10px]">Intake: {student.preferred_intake}</Badge>
+            )}
+          </div>
+        </div>
+        <div className="ml-auto">
+          {student.whatsapp_number && (
+            <a 
+              href={`https://wa.me/${student.whatsapp_number.replace(/\D/g, '')}`} 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              <Button variant="outline" className="gap-2 border-green-500/20 bg-green-500/10 text-green-500 hover:bg-green-500/20">
+                <MessageCircle className="h-4 w-4" />
+                WhatsApp
+              </Button>
+            </a>
+          )}
         </div>
       </div>
 
@@ -57,6 +77,8 @@ export default async function StudentProfilePage({
                 {[
                   { label: 'Email', value: student.email },
                   { label: 'Phone', value: student.phone },
+                  { label: 'WhatsApp', value: student.whatsapp_number },
+                  { label: 'Target Country', value: student.preferred_country },
                   { label: 'Nationality', value: student.nationality },
                   { label: 'Degree Level', value: student.degree_level },
                   { label: 'GPA', value: student.gpa != null ? student.gpa.toString() : null },

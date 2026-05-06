@@ -81,6 +81,8 @@ export async function getDashboardStats(agencyId: string) {
     pendingTasks: [],
     totalRevenue: 0,
     pendingRevenue: 0,
+    intakeCounts: {},
+    countryCounts: {},
   }
   const supabase = await createClient()
 
@@ -93,6 +95,17 @@ export async function getDashboardStats(agencyId: string) {
 
   const stageCounts = (pipeline.data ?? []).reduce<Record<string, number>>((acc, app) => {
     acc[app.stage] = (acc[app.stage] ?? 0) + 1
+    return acc
+  }, {})
+
+  const intakeCounts = (pipeline.data ?? []).reduce<Record<string, number>>((acc, app) => {
+    if (app.intake) acc[app.intake] = (acc[app.intake] ?? 0) + 1
+    return acc
+  }, {})
+
+  const { data: leadCountries } = await supabase.from('student_profiles').select('preferred_country').eq('agency_id', agencyUuid)
+  const countryCounts = (leadCountries ?? []).reduce<Record<string, number>>((acc, lead) => {
+    if (lead.preferred_country) acc[lead.preferred_country] = (acc[lead.preferred_country] ?? 0) + 1
     return acc
   }, {})
 
@@ -111,6 +124,8 @@ export async function getDashboardStats(agencyId: string) {
     totalStudents: students.count ?? 0,
     totalApplications: pipeline.data?.length ?? 0,
     stageCounts,
+    intakeCounts,
+    countryCounts,
     pendingTasks: tasks.data ?? [],
     totalRevenue,
     pendingRevenue,

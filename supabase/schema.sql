@@ -36,6 +36,9 @@ create table if not exists student_profiles (
   degree_level    text,
   gpa             numeric,
   ielts_score     numeric,
+  whatsapp_number  text,
+  preferred_country text,
+  preferred_intake text,
   created_at      timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -47,6 +50,7 @@ create table if not exists partner_universities (
   country         text,
   logo_url        text,
   requirements    jsonb default '{}'::jsonb,
+  scholarship_info text,
   commission_rate numeric default 10,
   created_at      timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -58,6 +62,8 @@ create table if not exists application_pipeline (
   student_id      uuid references student_profiles(id) on delete cascade,
   university_id   uuid references partner_universities(id) on delete set null,
   stage           text check (stage in ('Lead', 'Docs', 'Applied', 'Visa', 'Enrolled')) default 'Lead',
+  intake          text,
+  scholarship_amount numeric default 0,
   created_at      timestamp with time zone default timezone('utc'::text, now()) not null
 );
 

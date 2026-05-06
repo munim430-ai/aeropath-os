@@ -44,6 +44,9 @@ export interface StudentProfile {
   ielts_score: number | null
   email: string | null
   nationality: string | null
+  whatsapp_number: string | null
+  preferred_country: string | null
+  preferred_intake: string | null
   created_at: string
 }
 
@@ -80,6 +83,8 @@ export interface ApplicationPipeline {
   university_id: string
   stage: ApplicationStage
   notes: string | null
+  intake: string | null
+  scholarship_amount: number | null
   created_at: string
   updated_at: string
   student?: StudentProfile
