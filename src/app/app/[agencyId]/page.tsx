@@ -69,8 +69,9 @@ export default async function DashboardPage({
           <CardContent>
             <div className="space-y-3">
               {stages.map((stage) => {
-                const count = stats.stageCounts[stage] ?? 0
-                const max = Math.max(...stages.map((s) => stats.stageCounts[s] ?? 0), 1)
+                const stageCounts = stats.stageCounts as Record<string, number>
+                const count = stageCounts[stage] ?? 0
+                const max = Math.max(...stages.map((s) => stageCounts[s] ?? 0), 1)
                 return (
                   <div key={stage} className="flex items-center gap-3">
                     <span className="w-20 text-xs text-[#A0A0A0] shrink-0">{stage}</span>
