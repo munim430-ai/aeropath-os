@@ -152,3 +152,33 @@ create policy "Agency members manage financials" on financial_ledger for all usi
 
 -- Policies for Tasks
 create policy "Agency members manage tasks" on task_dispatcher for all using (agency_id = get_user_agency_id());
+
+-- 10. Cash Ledger (Daily Expenses/Inflow)
+create table if not exists cash_ledger (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade,
+  date            date default current_date,
+  description     text,
+  category        text, -- 'Salary', 'Rent', 'Utility', 'Extra', 'Deposit'
+  amount          numeric not null,
+  type            text check (type in ('In', 'Out')) not null,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 11. Bank Transactions
+create table if not exists bank_transactions (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade,
+  date            date default current_date,
+  description     text,
+  type            text check (type in ('Deposit', 'Withdrawal')) not null,
+  amount          numeric not null,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- RLS Policies for new tables
+alter table cash_ledger enable row level security;
+alter table bank_transactions enable row level security;
+
+create policy "Agency members manage cash ledger" on cash_ledger for all using (agency_id = get_user_agency_id());
+create policy "Agency members manage bank transactions" on bank_transactions for all using (agency_id = get_user_agency_id());
