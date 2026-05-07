@@ -60,6 +60,11 @@ export function AddStudentDialog({ agencyId }: { agencyId: string }) {
             <Input name="gpa" type="number" label="GPA" placeholder="3.75" step="0.01" min="0" max="4" />
             <Input name="ielts_score" type="number" label="IELTS" placeholder="7.0" step="0.5" min="0" max="9" />
           </div>
+          <Input name="whatsapp_number" label="WhatsApp Number" placeholder="+880..." />
+          <div className="grid grid-cols-2 gap-3">
+            <Input name="preferred_country" label="Preferred Country" placeholder="UK, Canada, etc." />
+            <Input name="preferred_intake" label="Target Intake" placeholder="Sept 2026" />
+          </div>
           {error && (
             <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-[6px] px-3 py-2">
               {error}

@@ -32,16 +32,16 @@ const DEMO_EMAIL = 'demo@aeropath.app'
 const DEMO_PASSWORD = 'Demo@12345!'
 
 const STUDENTS = [
-  { full_name: 'Al Afser Bhuiyan',   email: 'alafser@gmail.com',   nationality: 'Bangladeshi', degree_level: 'Bachelor', gpa: 3.72, ielts_score: 7.0 },
-  { full_name: 'Priya Sharma',        email: 'priya.s@hotmail.com', nationality: 'Indian',       degree_level: 'Master',  gpa: 3.85, ielts_score: 7.5 },
-  { full_name: 'Nguyen Van Minh',     email: 'vanminh@vn.com',      nationality: 'Vietnamese',   degree_level: 'Bachelor', gpa: 3.50, ielts_score: 6.5 },
-  { full_name: 'Fatima Al-Hassan',    email: 'fatima.h@mail.com',   nationality: 'Jordanian',    degree_level: 'Master',  gpa: 3.90, ielts_score: 8.0 },
-  { full_name: 'Carlos Rivera',       email: 'crivera@gmail.com',   nationality: 'Colombian',    degree_level: 'Bachelor', gpa: 3.30, ielts_score: 6.0 },
-  { full_name: 'Elena Popescu',       email: 'elena.p@yahoo.com',   nationality: 'Romanian',     degree_level: 'Master',  gpa: 3.75, ielts_score: 7.0 },
-  { full_name: 'Kwame Asante',        email: 'kwame.a@gmail.com',   nationality: 'Ghanaian',     degree_level: 'Bachelor', gpa: 3.60, ielts_score: 7.0 },
-  { full_name: 'Aisha Mohammed',      email: 'aisha.m@email.com',   nationality: 'Nigerian',     degree_level: 'PhD',     gpa: 3.95, ielts_score: 7.5 },
-  { full_name: 'Dmitri Volkov',       email: 'dvolkov@mail.ru',     nationality: 'Russian',      degree_level: 'Master',  gpa: 3.45, ielts_score: 6.5 },
-  { full_name: 'Xinyu Zhang',         email: 'xinyu.z@qq.com',      nationality: 'Chinese',      degree_level: 'Bachelor', gpa: 3.80, ielts_score: 7.0 },
+  { full_name: 'Al Afser Bhuiyan',   email: 'alafser@gmail.com',   nationality: 'Bangladeshi', degree_level: 'Bachelor', gpa: 3.72, ielts_score: 7.0, whatsapp_number: '+8801712345678', preferred_country: 'UK', preferred_intake: 'Sept 2026' },
+  { full_name: 'Priya Sharma',        email: 'priya.s@hotmail.com', nationality: 'Indian',       degree_level: 'Master',  gpa: 3.85, ielts_score: 7.5, whatsapp_number: '+919876543210', preferred_country: 'Canada', preferred_intake: 'Jan 2027' },
+  { full_name: 'Nguyen Van Minh',     email: 'vanminh@vn.com',      nationality: 'Vietnamese',   degree_level: 'Bachelor', gpa: 3.50, ielts_score: 6.5, whatsapp_number: '+84912345678', preferred_country: 'Australia', preferred_intake: 'Sept 2026' },
+  { full_name: 'Fatima Al-Hassan',    email: 'fatima.h@mail.com',   nationality: 'Jordanian',    degree_level: 'Master',  gpa: 3.90, ielts_score: 8.0, whatsapp_number: '+962791234567', preferred_country: 'UK', preferred_intake: 'Sept 2026' },
+  { full_name: 'Carlos Rivera',       email: 'crivera@gmail.com',   nationality: 'Colombian',    degree_level: 'Bachelor', gpa: 3.30, ielts_score: 6.0, whatsapp_number: '+573001234567', preferred_country: 'USA', preferred_intake: 'Jan 2027' },
+  { full_name: 'Elena Popescu',       email: 'elena.p@yahoo.com',   nationality: 'Romanian',     degree_level: 'Master',  gpa: 3.75, ielts_score: 7.0, whatsapp_number: '+40721234567', preferred_country: 'UK', preferred_intake: 'Sept 2026' },
+  { full_name: 'Kwame Asante',        email: 'kwame.a@gmail.com',   nationality: 'Ghanaian',     degree_level: 'Bachelor', gpa: 3.60, ielts_score: 7.0, whatsapp_number: '+233241234567', preferred_country: 'Canada', preferred_intake: 'Jan 2027' },
+  { full_name: 'Aisha Mohammed',      email: 'aisha.m@email.com',   nationality: 'Nigerian',     degree_level: 'PhD',     gpa: 3.95, ielts_score: 7.5, whatsapp_number: '+2348031234567', preferred_country: 'UK', preferred_intake: 'Sept 2026' },
+  { full_name: 'Dmitri Volkov',       email: 'dvolkov@mail.ru',     nationality: 'Russian',      degree_level: 'Master',  gpa: 3.45, ielts_score: 6.5, whatsapp_number: '+79161234567', preferred_country: 'USA', preferred_intake: 'Jan 2027' },
+  { full_name: 'Xinyu Zhang',         email: 'xinyu.z@qq.com',      nationality: 'Chinese',      degree_level: 'Bachelor', gpa: 3.80, ielts_score: 7.0, whatsapp_number: '+8613912345678', preferred_country: 'Australia', preferred_intake: 'Sept 2026' },
 ]
 
 const UNIVERSITIES = [
@@ -179,6 +179,8 @@ async function seed() {
       student_id: student.id,
       university_id: university.id,
       stage,
+      intake: student.preferred_intake,
+      scholarship_amount: Math.random() > 0.5 ? 5000 : 0,
     }).select().single()
 
     if (pipeline) {

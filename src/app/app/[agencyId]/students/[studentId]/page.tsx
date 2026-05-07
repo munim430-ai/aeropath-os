@@ -58,7 +58,7 @@ export default async function StudentProfilePage({
               target="_blank" 
               rel="noopener noreferrer"
             >
-              <Button variant="outline" className="gap-2 border-green-500/20 bg-green-500/10 text-green-500 hover:bg-green-500/20">
+              <Button variant="secondary" className="gap-2 border-green-500/20 bg-green-500/10 text-green-500 hover:bg-green-500/20">
                 <MessageCircle className="h-4 w-4" />
                 WhatsApp
               </Button>

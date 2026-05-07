@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { getInitials, formatDate } from '@/lib/utils'
-import { UserPlus, GraduationCap } from 'lucide-react'
+import { UserPlus, GraduationCap, MessageCircle } from 'lucide-react'
 import { AddStudentDialog } from './add-student-dialog'
 
 export default async function StudentsPage({
@@ -45,6 +45,17 @@ export default async function StudentsPage({
                       <p className="text-sm font-medium text-[#F5F5F5] truncate">{s.full_name}</p>
                       <p className="text-xs text-[#606060] truncate">{s.email || s.nationality || 'No email'}</p>
                     </div>
+                    {s.whatsapp_number && (
+                      <a 
+                        href={`https://wa.me/${s.whatsapp_number.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20 transition-colors shrink-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                      </a>
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {s.degree_level && (

@@ -88,7 +88,7 @@ export async function getDashboardStats(agencyId: string) {
 
   const [students, pipeline, tasks, ledger] = await Promise.all([
     supabase.from('student_profiles').select('id', { count: 'exact', head: true }).eq('agency_id', agencyUuid),
-    supabase.from('application_pipeline').select('id, stage').eq('agency_id', agencyUuid),
+    supabase.from('application_pipeline').select('id, stage, intake').eq('agency_id', agencyUuid),
     supabase.from('task_dispatcher').select('id, status, title, due_date, assigned_to_id').eq('agency_id', agencyUuid).eq('status', 'Pending').order('due_date', { ascending: true }).limit(5),
     supabase.from('financial_ledger').select('expected_commission, status').eq('agency_id', agencyUuid),
   ])
