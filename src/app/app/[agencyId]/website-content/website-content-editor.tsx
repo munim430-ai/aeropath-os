@@ -6,6 +6,7 @@ import { saveWebsiteContent } from '@/app/actions/website-content'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { createContentId, normalizeWebsiteContent } from '@/lib/website-content'
 import type {
@@ -193,7 +194,7 @@ function renderSection(
     case 'photos':
       return content.photos.map((item) => (
         <ContentPanel key={item.id} title={item.caption || 'Photo'} onDelete={() => removeItem(section, item.id)}>
-          <Input label="Image URL" value={item.image_url} onChange={(event) => updateItem<WebsitePhoto>(section, item.id, { image_url: event.target.value })} />
+          <ImageUploadField section={section} itemId={item.id} label="Image" value={item.image_url} onChange={(image_url) => updateItem<WebsitePhoto>(section, item.id, { image_url })} />
           <Input label="Alt Text" value={item.alt} onChange={(event) => updateItem<WebsitePhoto>(section, item.id, { alt: event.target.value })} />
           <Input label="Caption" value={item.caption} onChange={(event) => updateItem<WebsitePhoto>(section, item.id, { caption: event.target.value })} />
         </ContentPanel>
@@ -203,7 +204,7 @@ function renderSection(
         <ContentPanel key={item.id} title={item.name || 'Testimonial'} onDelete={() => removeItem(section, item.id)}>
           <Input label="Name" value={item.name} onChange={(event) => updateItem<WebsiteTestimonial>(section, item.id, { name: event.target.value })} />
           <Input label="Role / Result" value={item.role} onChange={(event) => updateItem<WebsiteTestimonial>(section, item.id, { role: event.target.value })} />
-          <Input label="Image URL" value={item.image_url} onChange={(event) => updateItem<WebsiteTestimonial>(section, item.id, { image_url: event.target.value })} />
+          <ImageUploadField section={section} itemId={item.id} label="Image" value={item.image_url} onChange={(image_url) => updateItem<WebsiteTestimonial>(section, item.id, { image_url })} />
           <Textarea label="Quote" value={item.quote} onChange={(event) => updateItem<WebsiteTestimonial>(section, item.id, { quote: event.target.value })} />
         </ContentPanel>
       ))
@@ -212,7 +213,7 @@ function renderSection(
         <ContentPanel key={item.id} title={item.name || 'Staff Member'} onDelete={() => removeItem(section, item.id)}>
           <Input label="Name" value={item.name} onChange={(event) => updateItem<WebsiteStaffMember>(section, item.id, { name: event.target.value })} />
           <Input label="Role" value={item.role} onChange={(event) => updateItem<WebsiteStaffMember>(section, item.id, { role: event.target.value })} />
-          <Input label="Image URL" value={item.image_url} onChange={(event) => updateItem<WebsiteStaffMember>(section, item.id, { image_url: event.target.value })} />
+          <ImageUploadField section={section} itemId={item.id} label="Image" value={item.image_url} onChange={(image_url) => updateItem<WebsiteStaffMember>(section, item.id, { image_url })} />
           <Textarea label="Bio" value={item.bio} onChange={(event) => updateItem<WebsiteStaffMember>(section, item.id, { bio: event.target.value })} />
         </ContentPanel>
       ))
@@ -230,7 +231,7 @@ function renderSection(
         <ContentPanel key={item.id} title={item.name || 'University'} onDelete={() => removeItem(section, item.id)}>
           <Input label="Name" value={item.name} onChange={(event) => updateItem<WebsiteUniversity>(section, item.id, { name: event.target.value })} />
           <Input label="Country" value={item.country} onChange={(event) => updateItem<WebsiteUniversity>(section, item.id, { country: event.target.value })} />
-          <Input label="Logo URL" value={item.logo_url} onChange={(event) => updateItem<WebsiteUniversity>(section, item.id, { logo_url: event.target.value })} />
+          <ImageUploadField section={section} itemId={item.id} label="Logo" value={item.logo_url} onChange={(logo_url) => updateItem<WebsiteUniversity>(section, item.id, { logo_url })} />
           <Textarea label="Description" value={item.description} onChange={(event) => updateItem<WebsiteUniversity>(section, item.id, { description: event.target.value })} />
         </ContentPanel>
       ))
@@ -248,7 +249,7 @@ function renderSection(
           <Input label="Tag" value={item.tag} placeholder="Visa Guide" onChange={(event) => updateItem<WebsiteBlogPost>(section, item.id, { tag: event.target.value })} />
           <Input label="Date" value={item.date} placeholder="May 09, 2026" onChange={(event) => updateItem<WebsiteBlogPost>(section, item.id, { date: event.target.value })} />
           <Input label="Read Time" value={item.read_time} placeholder="5 min" onChange={(event) => updateItem<WebsiteBlogPost>(section, item.id, { read_time: event.target.value })} />
-          <Input label="Image URL" value={item.image_url} onChange={(event) => updateItem<WebsiteBlogPost>(section, item.id, { image_url: event.target.value })} />
+          <ImageUploadField section={section} itemId={item.id} label="Image" value={item.image_url} onChange={(image_url) => updateItem<WebsiteBlogPost>(section, item.id, { image_url })} />
           <Input label="Post URL" value={item.url} placeholder="#" onChange={(event) => updateItem<WebsiteBlogPost>(section, item.id, { url: event.target.value })} />
           <Textarea label="Excerpt" value={item.excerpt} onChange={(event) => updateItem<WebsiteBlogPost>(section, item.id, { excerpt: event.target.value })} />
         </ContentPanel>
@@ -274,6 +275,101 @@ function ContentPanel({
         </Button>
       </div>
       <div className="grid gap-3 md:grid-cols-2">{children}</div>
+    </div>
+  )
+}
+
+function ImageUploadField({
+  itemId,
+  label,
+  onChange,
+  section,
+  value,
+}: {
+  itemId: string
+  label: string
+  onChange: (value: string) => void
+  section: SectionKey
+  value: string
+}) {
+  const [uploading, setUploading] = React.useState(false)
+  const [uploadError, setUploadError] = React.useState<string | null>(null)
+  const inputId = `${section}-${itemId}-${label.toLowerCase()}`
+  const supabase = React.useMemo(() => createClient(), [])
+
+  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    setUploadError(null)
+
+    const extension = file.name.split('.').pop() || 'jpg'
+    const safeName = file.name
+      .replace(/\.[^/.]+$/, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 48) || 'image'
+    const path = `${window.location.pathname.split('/')[2]}/${section}/${itemId}/${Date.now()}-${safeName}.${extension}`
+    const { error } = await supabase.storage.from('website-assets').upload(path, file, {
+      cacheControl: '31536000',
+      upsert: false,
+    })
+
+    if (error) {
+      setUploadError(error.message)
+      setUploading(false)
+      return
+    }
+
+    const { data } = supabase.storage.from('website-assets').getPublicUrl(path)
+    onChange(data.publicUrl)
+    event.target.value = ''
+    setUploading(false)
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5 md:col-span-2">
+      <label htmlFor={inputId} className="text-xs font-medium text-[#A0A0A0]">
+        {label}
+      </label>
+      <div className="grid gap-3 md:grid-cols-[128px_1fr]">
+        <div className="flex h-28 items-center justify-center overflow-hidden rounded-[8px] border border-[#2A2A2A] bg-[#111111]">
+          {value ? (
+            <img src={value} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <Image className="h-7 w-7 text-[#606060]" />
+          )}
+        </div>
+        <div className="space-y-2">
+          <Input
+            id={inputId}
+            label="Image URL"
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder="Upload an image or paste a URL"
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="inline-flex h-8 cursor-pointer items-center justify-center rounded-[var(--radius-md)] border border-[#2A2A2A] bg-[#1A1A1A] px-3 text-xs font-medium text-[#F5F5F5] transition-colors hover:bg-[#222222]">
+              {uploading ? 'Uploading...' : 'Upload Image'}
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                disabled={uploading}
+                onChange={handleFileChange}
+              />
+            </label>
+            {value && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => onChange('')}>
+                Clear
+              </Button>
+            )}
+          </div>
+          {uploadError && <p className="text-xs text-red-400">{uploadError}</p>}
+        </div>
+      </div>
     </div>
   )
 }

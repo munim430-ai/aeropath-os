@@ -210,3 +210,38 @@ create policy "Public agency profiles for published websites" on agencies
         and website_content.is_published = true
     )
   );
+
+-- Website asset uploads
+insert into storage.buckets (id, name, public)
+values ('website-assets', 'website-assets', true)
+on conflict (id) do update set public = true;
+
+create policy "Agency members upload website assets" on storage.objects
+  for insert with check (
+    bucket_id = 'website-assets'
+    and (storage.foldername(name))[1] in (
+      select agencies.subdomain
+      from agencies
+      where agencies.id = get_user_agency_id()
+    )
+  );
+
+create policy "Agency members update website assets" on storage.objects
+  for update using (
+    bucket_id = 'website-assets'
+    and (storage.foldername(name))[1] in (
+      select agencies.subdomain
+      from agencies
+      where agencies.id = get_user_agency_id()
+    )
+  );
+
+create policy "Agency members delete website assets" on storage.objects
+  for delete using (
+    bucket_id = 'website-assets'
+    and (storage.foldername(name))[1] in (
+      select agencies.subdomain
+      from agencies
+      where agencies.id = get_user_agency_id()
+    )
+  );
