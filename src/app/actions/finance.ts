@@ -9,16 +9,14 @@ export async function getFinanceData(agencyId: string) {
 
   const supabase = await createClient()
 
-  const [cash, bank, ledger] = await Promise.all([
-    supabase.from('cash_ledger').select('*').eq('agency_id', agencyUuid).order('date', { ascending: true }),
-    supabase.from('bank_transactions').select('*').eq('agency_id', agencyUuid).order('date', { ascending: true }),
-    supabase.from('financial_ledger').select('*').eq('agency_id', agencyUuid).order('created_at', { ascending: false }),
+  const [cash, bank] = await Promise.all([
+    supabase.from('cash_ledger').select('*').eq('agency_id', agencyUuid).order('date', { ascending: false }),
+    supabase.from('bank_transactions').select('*').eq('agency_id', agencyUuid).order('date', { ascending: false }),
   ])
 
   return {
     cash: cash.data ?? [],
     bank: bank.data ?? [],
-    commissions: ledger.data ?? [],
   }
 }
 
@@ -53,6 +51,30 @@ export async function addBankTransaction(agencyId: string, formData: FormData) {
     amount: Number(formData.get('amount')),
     date: formData.get('date') as string,
   })
+
+  if (error) return { error: error.message }
+  revalidatePath(`/app/${agencyId}/financials`)
+  return { success: true }
+}
+
+export async function deleteCashEntry(agencyId: string, id: string) {
+  const agencyUuid = await getAgencyUUID(agencyId)
+  if (!agencyUuid) return { error: 'Unauthorized' }
+
+  const supabase = await createClient()
+  const { error } = await supabase.from('cash_ledger').delete().eq('id', id).eq('agency_id', agencyUuid)
+
+  if (error) return { error: error.message }
+  revalidatePath(`/app/${agencyId}/financials`)
+  return { success: true }
+}
+
+export async function deleteBankTransaction(agencyId: string, id: string) {
+  const agencyUuid = await getAgencyUUID(agencyId)
+  if (!agencyUuid) return { error: 'Unauthorized' }
+
+  const supabase = await createClient()
+  const { error } = await supabase.from('bank_transactions').delete().eq('id', id).eq('agency_id', agencyUuid)
 
   if (error) return { error: error.message }
   revalidatePath(`/app/${agencyId}/financials`)
