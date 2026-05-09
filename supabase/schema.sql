@@ -245,3 +245,66 @@ create policy "Agency members delete website assets" on storage.objects
       where agencies.id = get_user_agency_id()
     )
   );
+
+-- Student portal document uploads
+insert into storage.buckets (id, name, public)
+values ('documents', 'documents', true)
+on conflict (id) do update set public = true;
+
+create policy "Students read their own documents" on document_vault
+  for select using (
+    exists (
+      select 1
+      from student_profiles
+      where student_profiles.id = document_vault.student_id
+        and student_profiles.agency_id = document_vault.agency_id
+        and lower(student_profiles.email) = lower(auth.jwt() ->> 'email')
+    )
+  );
+
+create policy "Students insert their own documents" on document_vault
+  for insert with check (
+    exists (
+      select 1
+      from student_profiles
+      where student_profiles.id = document_vault.student_id
+        and student_profiles.agency_id = document_vault.agency_id
+        and lower(student_profiles.email) = lower(auth.jwt() ->> 'email')
+    )
+  );
+
+create policy "Agency members upload document files" on storage.objects
+  for insert with check (
+    bucket_id = 'documents'
+    and (storage.foldername(name))[1] in (
+      select agencies.subdomain
+      from agencies
+      where agencies.id = get_user_agency_id()
+    )
+  );
+
+create policy "Students upload own document files" on storage.objects
+  for insert with check (
+    bucket_id = 'documents'
+    and exists (
+      select 1
+      from student_profiles
+      join agencies on agencies.id = student_profiles.agency_id
+      where agencies.subdomain = (storage.foldername(name))[1]
+        and student_profiles.id::text = (storage.foldername(name))[2]
+        and lower(student_profiles.email) = lower(auth.jwt() ->> 'email')
+    )
+  );
+
+create policy "Students read own document files" on storage.objects
+  for select using (
+    bucket_id = 'documents'
+    and exists (
+      select 1
+      from student_profiles
+      join agencies on agencies.id = student_profiles.agency_id
+      where agencies.subdomain = (storage.foldername(name))[1]
+        and student_profiles.id::text = (storage.foldername(name))[2]
+        and lower(student_profiles.email) = lower(auth.jwt() ->> 'email')
+    )
+  );

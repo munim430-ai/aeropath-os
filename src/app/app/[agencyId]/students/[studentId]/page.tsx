@@ -29,7 +29,6 @@ export default async function StudentProfilePage({
     .from('document_vault')
     .select('*')
     .eq('student_id', studentId)
-    .eq('agency_id', agencyId)
     .order('created_at', { ascending: false })
 
   const eligible = eligibility.filter((e) => e.eligible)
