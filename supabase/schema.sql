@@ -182,3 +182,31 @@ alter table bank_transactions enable row level security;
 
 create policy "Agency members manage cash ledger" on cash_ledger for all using (agency_id = get_user_agency_id());
 create policy "Agency members manage bank transactions" on bank_transactions for all using (agency_id = get_user_agency_id());
+
+-- 12. Website Content CMS
+create table if not exists website_content (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade unique not null,
+  content         jsonb default '{}'::jsonb not null,
+  is_published    boolean default false not null,
+  published_at    timestamp with time zone,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at      timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table website_content enable row level security;
+
+create policy "Agency members manage website content" on website_content
+  for all using (agency_id = get_user_agency_id());
+
+create policy "Published website content is public" on website_content
+  for select using (is_published = true);
+
+create policy "Public agency profiles for published websites" on agencies
+  for select using (
+    exists (
+      select 1 from website_content
+      where website_content.agency_id = agencies.id
+        and website_content.is_published = true
+    )
+  );

@@ -135,3 +135,67 @@ export interface EligibilityResult {
   eligible: boolean
   reasons: string[]
 }
+
+export interface WebsitePhoto {
+  id: string
+  image_url: string
+  alt: string
+  caption: string
+}
+
+export interface WebsiteTestimonial {
+  id: string
+  name: string
+  role: string
+  quote: string
+  image_url: string
+}
+
+export interface WebsiteStaffMember {
+  id: string
+  name: string
+  role: string
+  bio: string
+  image_url: string
+}
+
+export interface WebsiteProgramme {
+  id: string
+  title: string
+  country: string
+  duration: string
+  description: string
+}
+
+export interface WebsiteUniversity {
+  id: string
+  name: string
+  country: string
+  logo_url: string
+  description: string
+}
+
+export interface WebsiteFAQ {
+  id: string
+  question: string
+  answer: string
+}
+
+export interface WebsiteContentData {
+  photos: WebsitePhoto[]
+  testimonials: WebsiteTestimonial[]
+  staff: WebsiteStaffMember[]
+  programmes: WebsiteProgramme[]
+  universities: WebsiteUniversity[]
+  faqs: WebsiteFAQ[]
+}
+
+export interface WebsiteContent {
+  id: string
+  agency_id: string
+  content: WebsiteContentData
+  is_published: boolean
+  published_at: string | null
+  created_at: string
+  updated_at: string
+}

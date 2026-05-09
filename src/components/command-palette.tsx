@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import { Command } from 'cmdk'
-import { Search, User, Layers, CheckSquare, Settings, X } from 'lucide-react'
+import { Search, User, Layers, CheckSquare, Settings, X, PanelsTopLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface CommandPaletteProps {
@@ -29,8 +29,12 @@ export function CommandPalette({ agencyId }: CommandPaletteProps) {
   }, [])
 
   React.useEffect(() => {
-    if (!query.trim()) { setStudents([]); return }
     const timer = setTimeout(async () => {
+      if (!query.trim()) {
+        setStudents([])
+        return
+      }
+
       const { data } = await supabase
         .from('student_profiles')
         .select('id, full_name')
@@ -90,6 +94,7 @@ export function CommandPalette({ agencyId }: CommandPaletteProps) {
               {[
                 { icon: Layers, label: 'Pipeline', path: `/app/${agencyId}/pipeline` },
                 { icon: User, label: 'Students', path: `/app/${agencyId}/students` },
+                { icon: PanelsTopLeft, label: 'Website Content', path: `/app/${agencyId}/website-content` },
                 { icon: CheckSquare, label: 'Tasks', path: `/app/${agencyId}/tasks` },
                 { icon: Settings, label: 'Settings', path: `/app/${agencyId}/settings` },
               ].map(({ icon: Icon, label, path }) => (

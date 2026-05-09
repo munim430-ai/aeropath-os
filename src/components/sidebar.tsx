@@ -14,9 +14,10 @@ import {
   GraduationCap,
   Search,
   Globe,
+  PanelsTopLeft,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import type { Agency, User } from '@/lib/types'
 import { signOut } from '@/app/actions/auth'
 
@@ -30,6 +31,7 @@ const navItems = (agencyId: string) => [
   { href: `/app/${agencyId}/students`, icon: Users, label: 'Students' },
   { href: `/app/${agencyId}/pipeline`, icon: Layers, label: 'Pipeline' },
   { href: `/app/${agencyId}/universities`, icon: GraduationCap, label: 'Universities' },
+  { href: `/app/${agencyId}/website-content`, icon: PanelsTopLeft, label: 'Website Content' },
   { href: `/app/${agencyId}/tasks`, icon: CheckSquare, label: 'Tasks' },
   { href: `/app/${agencyId}/financials`, icon: DollarSign, label: 'Financials' },
   { href: `/app/${agencyId}/settings`, icon: Settings, label: 'Settings' },
