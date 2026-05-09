@@ -11,6 +11,7 @@ import { createContentId, normalizeWebsiteContent } from '@/lib/website-content'
 import type {
   WebsiteContent,
   WebsiteContentData,
+  WebsiteBlogPost,
   WebsiteFAQ,
   WebsitePhoto,
   WebsiteProgramme,
@@ -27,6 +28,7 @@ const sections: Array<{ key: SectionKey; label: string }> = [
   { key: 'staff', label: 'Staff' },
   { key: 'programmes', label: 'Programmes' },
   { key: 'universities', label: 'Universities' },
+  { key: 'blogPosts', label: 'Blog Posts' },
   { key: 'faqs', label: 'FAQ' },
 ]
 
@@ -239,6 +241,18 @@ function renderSection(
           <Textarea label="Answer" value={item.answer} onChange={(event) => updateItem<WebsiteFAQ>(section, item.id, { answer: event.target.value })} />
         </ContentPanel>
       ))
+    case 'blogPosts':
+      return content.blogPosts.map((item) => (
+        <ContentPanel key={item.id} title={item.title || 'Blog Post'} onDelete={() => removeItem(section, item.id)}>
+          <Input label="Title" value={item.title} onChange={(event) => updateItem<WebsiteBlogPost>(section, item.id, { title: event.target.value })} />
+          <Input label="Tag" value={item.tag} placeholder="Visa Guide" onChange={(event) => updateItem<WebsiteBlogPost>(section, item.id, { tag: event.target.value })} />
+          <Input label="Date" value={item.date} placeholder="May 09, 2026" onChange={(event) => updateItem<WebsiteBlogPost>(section, item.id, { date: event.target.value })} />
+          <Input label="Read Time" value={item.read_time} placeholder="5 min" onChange={(event) => updateItem<WebsiteBlogPost>(section, item.id, { read_time: event.target.value })} />
+          <Input label="Image URL" value={item.image_url} onChange={(event) => updateItem<WebsiteBlogPost>(section, item.id, { image_url: event.target.value })} />
+          <Input label="Post URL" value={item.url} placeholder="#" onChange={(event) => updateItem<WebsiteBlogPost>(section, item.id, { url: event.target.value })} />
+          <Textarea label="Excerpt" value={item.excerpt} onChange={(event) => updateItem<WebsiteBlogPost>(section, item.id, { excerpt: event.target.value })} />
+        </ContentPanel>
+      ))
   }
 }
 
@@ -315,5 +329,7 @@ function createEmptyItem(section: SectionKey) {
       return { id, name: '', country: '', logo_url: '', description: '' }
     case 'faqs':
       return { id, question: '', answer: '' }
+    case 'blogPosts':
+      return { id, title: '', tag: '', date: '', read_time: '', excerpt: '', image_url: '', url: '' }
   }
 }

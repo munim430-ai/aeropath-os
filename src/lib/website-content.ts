@@ -7,6 +7,7 @@ export const emptyWebsiteContent: WebsiteContentData = {
   programmes: [],
   universities: [],
   faqs: [],
+  blogPosts: [],
 }
 
 export function normalizeWebsiteContent(value: unknown): WebsiteContentData {
@@ -19,6 +20,7 @@ export function normalizeWebsiteContent(value: unknown): WebsiteContentData {
     programmes: Array.isArray(content.programmes) ? content.programmes : [],
     universities: Array.isArray(content.universities) ? content.universities : [],
     faqs: Array.isArray(content.faqs) ? content.faqs : [],
+    blogPosts: Array.isArray(content.blogPosts) ? content.blogPosts : [],
   } as WebsiteContentData
 }
 

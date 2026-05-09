@@ -181,6 +181,17 @@ export interface WebsiteFAQ {
   answer: string
 }
 
+export interface WebsiteBlogPost {
+  id: string
+  title: string
+  tag: string
+  date: string
+  read_time: string
+  excerpt: string
+  image_url: string
+  url: string
+}
+
 export interface WebsiteContentData {
   photos: WebsitePhoto[]
   testimonials: WebsiteTestimonial[]
@@ -188,6 +199,7 @@ export interface WebsiteContentData {
   programmes: WebsiteProgramme[]
   universities: WebsiteUniversity[]
   faqs: WebsiteFAQ[]
+  blogPosts: WebsiteBlogPost[]
 }
 
 export interface WebsiteContent {
