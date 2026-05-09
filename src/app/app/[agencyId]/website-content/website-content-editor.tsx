@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { CheckCircle2, Image, Plus, Save, Send, Trash2, UserRound } from 'lucide-react'
+import { CheckCircle2, ExternalLink, Image, Info, Plus, Save, Send, Trash2, UserRound } from 'lucide-react'
 import { saveWebsiteContent } from '@/app/actions/website-content'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,22 +23,79 @@ import type {
 
 type SectionKey = keyof WebsiteContentData
 
+const sectionMeta: Record<SectionKey, {
+  anchor: string
+  description: string
+  imageLabel?: string
+  label: string
+  placement: string
+}> = {
+  photos: {
+    anchor: 'engagement',
+    description: 'Upload images for the gallery/event area on the public website.',
+    imageLabel: 'Gallery / engagement image',
+    label: 'Photos',
+    placement: 'Website gallery / engagement section',
+  },
+  testimonials: {
+    anchor: 'stories',
+    description: 'Student testimonials become success story cards on the website.',
+    imageLabel: 'Success story card image',
+    label: 'Testimonials',
+    placement: 'Success Stories section',
+  },
+  staff: {
+    anchor: 'team',
+    description: 'Team members appear in the public team grid.',
+    imageLabel: 'Team member photo',
+    label: 'Staff',
+    placement: 'Our Team section',
+  },
+  programmes: {
+    anchor: 'programmes',
+    description: 'Programmes appear as course/pathway cards before the main service content.',
+    label: 'Programmes',
+    placement: 'Featured Programmes section',
+  },
+  universities: {
+    anchor: 'universities',
+    description: 'Universities appear as partner/featured university cards.',
+    imageLabel: 'University logo',
+    label: 'Universities',
+    placement: 'Partner Universities section',
+  },
+  blogPosts: {
+    anchor: 'blog',
+    description: 'Blog posts replace the Field Notes cards on the website.',
+    imageLabel: 'Blog card image',
+    label: 'Blog Posts',
+    placement: 'Blog / Field Notes section',
+  },
+  faqs: {
+    anchor: 'faq',
+    description: 'FAQs appear near the bottom of the website before the contact section.',
+    label: 'FAQ',
+    placement: 'FAQ section',
+  },
+}
+
 const sections: Array<{ key: SectionKey; label: string }> = [
-  { key: 'photos', label: 'Photos' },
-  { key: 'testimonials', label: 'Testimonials' },
-  { key: 'staff', label: 'Staff' },
-  { key: 'programmes', label: 'Programmes' },
-  { key: 'universities', label: 'Universities' },
-  { key: 'blogPosts', label: 'Blog Posts' },
-  { key: 'faqs', label: 'FAQ' },
+  { key: 'photos', label: sectionMeta.photos.label },
+  { key: 'testimonials', label: sectionMeta.testimonials.label },
+  { key: 'staff', label: sectionMeta.staff.label },
+  { key: 'programmes', label: sectionMeta.programmes.label },
+  { key: 'universities', label: sectionMeta.universities.label },
+  { key: 'blogPosts', label: sectionMeta.blogPosts.label },
+  { key: 'faqs', label: sectionMeta.faqs.label },
 ]
 
 interface WebsiteContentEditorProps {
   agencyId: string
   initialContent: WebsiteContent
+  websiteUrl: string | null
 }
 
-export function WebsiteContentEditor({ agencyId, initialContent }: WebsiteContentEditorProps) {
+export function WebsiteContentEditor({ agencyId, initialContent, websiteUrl }: WebsiteContentEditorProps) {
   const [activeSection, setActiveSection] = React.useState<SectionKey>('photos')
   const [content, setContent] = React.useState<WebsiteContentData>(
     normalizeWebsiteContent(initialContent.content)
@@ -93,6 +150,8 @@ export function WebsiteContentEditor({ agencyId, initialContent }: WebsiteConten
   }
 
   const currentCount = content[activeSection].length
+  const activeMeta = sectionMeta[activeSection]
+  const previewUrl = getPreviewUrl(websiteUrl, activeMeta.anchor)
 
   return (
     <div className="grid gap-5 xl:grid-cols-[220px_1fr]">
@@ -122,17 +181,28 @@ export function WebsiteContentEditor({ agencyId, initialContent }: WebsiteConten
 
       <div className="space-y-4">
         <Card>
-          <CardHeader className="flex-row items-center justify-between gap-3">
+          <CardHeader className="gap-4">
+            <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
             <div>
-              <CardTitle>{sections.find((section) => section.key === activeSection)?.label}</CardTitle>
+              <CardTitle>{activeMeta.label}</CardTitle>
               <p className="text-xs text-[#606060] mt-1">
                 {currentCount} {currentCount === 1 ? 'item' : 'items'} in this section
               </p>
             </div>
-            <Button type="button" variant="secondary" size="sm" onClick={() => addItem(activeSection)}>
-              <Plus className="h-4 w-4" />
-              Add
-            </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild type="button" variant="secondary" size="sm">
+                  <a href={previewUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4" />
+                    Preview Section
+                  </a>
+                </Button>
+                <Button type="button" variant="secondary" size="sm" onClick={() => addItem(activeSection)}>
+                  <Plus className="h-4 w-4" />
+                  Add
+                </Button>
+              </div>
+            </div>
+            <SectionGuide meta={activeMeta} />
           </CardHeader>
           <CardContent>
             {currentCount === 0 ? (
@@ -194,7 +264,7 @@ function renderSection(
     case 'photos':
       return content.photos.map((item) => (
         <ContentPanel key={item.id} title={item.caption || 'Photo'} onDelete={() => removeItem(section, item.id)}>
-          <ImageUploadField section={section} itemId={item.id} label="Image" value={item.image_url} onChange={(image_url) => updateItem<WebsitePhoto>(section, item.id, { image_url })} />
+          <ImageUploadField section={section} itemId={item.id} label={sectionMeta[section].imageLabel || 'Image'} value={item.image_url} onChange={(image_url) => updateItem<WebsitePhoto>(section, item.id, { image_url })} />
           <Input label="Alt Text" value={item.alt} onChange={(event) => updateItem<WebsitePhoto>(section, item.id, { alt: event.target.value })} />
           <Input label="Caption" value={item.caption} onChange={(event) => updateItem<WebsitePhoto>(section, item.id, { caption: event.target.value })} />
         </ContentPanel>
@@ -204,7 +274,7 @@ function renderSection(
         <ContentPanel key={item.id} title={item.name || 'Testimonial'} onDelete={() => removeItem(section, item.id)}>
           <Input label="Name" value={item.name} onChange={(event) => updateItem<WebsiteTestimonial>(section, item.id, { name: event.target.value })} />
           <Input label="Role / Result" value={item.role} onChange={(event) => updateItem<WebsiteTestimonial>(section, item.id, { role: event.target.value })} />
-          <ImageUploadField section={section} itemId={item.id} label="Image" value={item.image_url} onChange={(image_url) => updateItem<WebsiteTestimonial>(section, item.id, { image_url })} />
+          <ImageUploadField section={section} itemId={item.id} label={sectionMeta[section].imageLabel || 'Image'} value={item.image_url} onChange={(image_url) => updateItem<WebsiteTestimonial>(section, item.id, { image_url })} />
           <Textarea label="Quote" value={item.quote} onChange={(event) => updateItem<WebsiteTestimonial>(section, item.id, { quote: event.target.value })} />
         </ContentPanel>
       ))
@@ -213,7 +283,7 @@ function renderSection(
         <ContentPanel key={item.id} title={item.name || 'Staff Member'} onDelete={() => removeItem(section, item.id)}>
           <Input label="Name" value={item.name} onChange={(event) => updateItem<WebsiteStaffMember>(section, item.id, { name: event.target.value })} />
           <Input label="Role" value={item.role} onChange={(event) => updateItem<WebsiteStaffMember>(section, item.id, { role: event.target.value })} />
-          <ImageUploadField section={section} itemId={item.id} label="Image" value={item.image_url} onChange={(image_url) => updateItem<WebsiteStaffMember>(section, item.id, { image_url })} />
+          <ImageUploadField section={section} itemId={item.id} label={sectionMeta[section].imageLabel || 'Image'} value={item.image_url} onChange={(image_url) => updateItem<WebsiteStaffMember>(section, item.id, { image_url })} />
           <Textarea label="Bio" value={item.bio} onChange={(event) => updateItem<WebsiteStaffMember>(section, item.id, { bio: event.target.value })} />
         </ContentPanel>
       ))
@@ -231,7 +301,7 @@ function renderSection(
         <ContentPanel key={item.id} title={item.name || 'University'} onDelete={() => removeItem(section, item.id)}>
           <Input label="Name" value={item.name} onChange={(event) => updateItem<WebsiteUniversity>(section, item.id, { name: event.target.value })} />
           <Input label="Country" value={item.country} onChange={(event) => updateItem<WebsiteUniversity>(section, item.id, { country: event.target.value })} />
-          <ImageUploadField section={section} itemId={item.id} label="Logo" value={item.logo_url} onChange={(logo_url) => updateItem<WebsiteUniversity>(section, item.id, { logo_url })} />
+          <ImageUploadField section={section} itemId={item.id} label={sectionMeta[section].imageLabel || 'Logo'} value={item.logo_url} onChange={(logo_url) => updateItem<WebsiteUniversity>(section, item.id, { logo_url })} />
           <Textarea label="Description" value={item.description} onChange={(event) => updateItem<WebsiteUniversity>(section, item.id, { description: event.target.value })} />
         </ContentPanel>
       ))
@@ -249,12 +319,26 @@ function renderSection(
           <Input label="Tag" value={item.tag} placeholder="Visa Guide" onChange={(event) => updateItem<WebsiteBlogPost>(section, item.id, { tag: event.target.value })} />
           <Input label="Date" value={item.date} placeholder="May 09, 2026" onChange={(event) => updateItem<WebsiteBlogPost>(section, item.id, { date: event.target.value })} />
           <Input label="Read Time" value={item.read_time} placeholder="5 min" onChange={(event) => updateItem<WebsiteBlogPost>(section, item.id, { read_time: event.target.value })} />
-          <ImageUploadField section={section} itemId={item.id} label="Image" value={item.image_url} onChange={(image_url) => updateItem<WebsiteBlogPost>(section, item.id, { image_url })} />
+          <ImageUploadField section={section} itemId={item.id} label={sectionMeta[section].imageLabel || 'Image'} value={item.image_url} onChange={(image_url) => updateItem<WebsiteBlogPost>(section, item.id, { image_url })} />
           <Input label="Post URL" value={item.url} placeholder="#" onChange={(event) => updateItem<WebsiteBlogPost>(section, item.id, { url: event.target.value })} />
           <Textarea label="Excerpt" value={item.excerpt} onChange={(event) => updateItem<WebsiteBlogPost>(section, item.id, { excerpt: event.target.value })} />
         </ContentPanel>
       ))
   }
+}
+
+function SectionGuide({ meta }: { meta: (typeof sectionMeta)[SectionKey] }) {
+  return (
+    <div className="rounded-[8px] border border-[var(--tenant-primary)]/20 bg-[var(--tenant-primary)]/10 p-3">
+      <div className="flex items-start gap-2">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-[var(--tenant-primary)]" />
+        <div>
+          <p className="text-xs font-medium text-[#F5F5F5]">Appears on website: {meta.placement}</p>
+          <p className="mt-1 text-xs leading-relaxed text-[#A0A0A0]">{meta.description}</p>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function ContentPanel({
@@ -277,6 +361,14 @@ function ContentPanel({
       <div className="grid gap-3 md:grid-cols-2">{children}</div>
     </div>
   )
+}
+
+function getPreviewUrl(websiteUrl: string | null, anchor: string) {
+  const fallback = 'https://eduflex-v2.vercel.app'
+  const baseUrl = websiteUrl?.trim() || fallback
+  const normalized = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`
+
+  return `${normalized.replace(/\/$/, '')}/#${anchor}`
 }
 
 function ImageUploadField({

@@ -1,5 +1,6 @@
 import { getWebsiteContent } from '@/app/actions/website-content'
 import { Card, CardContent } from '@/components/ui/card'
+import { createClient } from '@/lib/supabase/server'
 import { WebsiteContentEditor } from './website-content-editor'
 
 export default async function WebsiteContentPage({
@@ -9,6 +10,12 @@ export default async function WebsiteContentPage({
 }) {
   const { agencyId } = await params
   const websiteContent = await getWebsiteContent(agencyId)
+  const supabase = await createClient()
+  const { data: agency } = await supabase
+    .from('agencies')
+    .select('website')
+    .eq('subdomain', agencyId)
+    .maybeSingle()
 
   return (
     <div className="space-y-5">
@@ -20,7 +27,11 @@ export default async function WebsiteContentPage({
       </div>
 
       {websiteContent ? (
-        <WebsiteContentEditor agencyId={agencyId} initialContent={websiteContent} />
+        <WebsiteContentEditor
+          agencyId={agencyId}
+          initialContent={websiteContent}
+          websiteUrl={agency?.website ?? null}
+        />
       ) : (
         <Card>
           <CardContent className="pt-5">
