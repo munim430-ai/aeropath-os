@@ -99,6 +99,20 @@ export function buildStudentPortalRedirectUrl(
   return `${baseUrl}/portal/${agencyId}/dashboard`
 }
 
+export function mapStudentMagicLinkError(message: string) {
+  const normalized = message.toLowerCase()
+
+  if (normalized.includes('rate limit')) {
+    return 'Too many login emails were requested. Please wait a few minutes and try again, or ask your agency to configure production SMTP.'
+  }
+
+  if (normalized.includes('redirect')) {
+    return 'The portal login redirect is not allowed yet. Please contact your agency administrator.'
+  }
+
+  return message
+}
+
 function hasValue(value: unknown) {
   return value !== null && value !== undefined && String(value).trim() !== ''
 }

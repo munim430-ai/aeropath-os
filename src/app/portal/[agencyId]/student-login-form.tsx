@@ -17,11 +17,16 @@ export function StudentLoginForm({ agencyId }: { agencyId: string }) {
     setMessage(null)
     setError(null)
 
-    const result = await requestStudentMagicLink(agencyId, new FormData(event.currentTarget))
+    try {
+      const result = await requestStudentMagicLink(agencyId, new FormData(event.currentTarget))
 
-    if (result.error) setError(result.error)
-    if (result.success) setMessage(result.success)
-    setLoading(false)
+      if (result.error) setError(result.error)
+      if (result.success) setMessage(result.success)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to send the login email. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

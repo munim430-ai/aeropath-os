@@ -7,6 +7,7 @@ import { createAdminClient, createClient } from '@/lib/supabase/server'
 import {
   buildStudentPortalRedirectUrl,
   buildStudentProfileUpdate,
+  mapStudentMagicLinkError,
   normalizePortalEmail,
 } from '@/lib/student-portal'
 
@@ -72,7 +73,7 @@ export async function sendStudentPortalMagicLink(
     },
   })
 
-  if (error) return { error: error.message }
+  if (error) return { error: mapStudentMagicLinkError(error.message) }
 
   return { success: 'Check your email for a secure login link.' }
 }

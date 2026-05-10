@@ -9,6 +9,7 @@ import {
   getStudentProfileCompletion,
   detectStudentDocumentType,
   isAllowedStudentDocument,
+  mapStudentMagicLinkError,
   normalizePortalEmail,
 } from './student-portal'
 
@@ -45,6 +46,13 @@ describe('student portal helpers', () => {
     })
 
     assert.equal(url, 'https://aeropath-os.vercel.app/portal/demo/dashboard')
+  })
+
+  it('maps Supabase email rate limit errors to a clear student message', () => {
+    assert.equal(
+      mapStudentMagicLinkError('email rate limit exceeded'),
+      'Too many login emails were requested. Please wait a few minutes and try again, or ask your agency to configure production SMTP.'
+    )
   })
 
   it('detects common document types from file names', () => {
