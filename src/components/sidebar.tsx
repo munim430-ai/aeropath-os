@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
@@ -47,7 +48,14 @@ export function Sidebar({ agency, user }: SidebarProps) {
       {/* Brand */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-[#1E1E1E]">
         {agency.logo_url ? (
-          <img src={agency.logo_url} alt={agency.name} className="h-7 w-7 rounded-md object-cover" />
+          <Image
+            src={agency.logo_url}
+            alt={agency.name}
+            width={28}
+            height={28}
+            unoptimized
+            className="h-7 w-7 rounded-md object-cover"
+          />
         ) : (
           <div
             className="h-7 w-7 rounded-md flex items-center justify-center text-white text-xs font-bold"

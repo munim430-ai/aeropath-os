@@ -2,14 +2,24 @@
 
 import * as React from 'react'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { updateLedgerStatus } from '@/app/actions/financials'
 import { Check, X, RotateCcw } from 'lucide-react'
 
-export function LedgerItem({ entry, agencyId }: { entry: any, agencyId: string }) {
+type LedgerEntry = {
+  id: string
+  status: 'Pending' | 'Received' | 'Cancelled'
+  expected_commission: number
+  created_at: string
+  pipeline?: {
+    student?: { full_name?: string | null } | null
+    university?: { name?: string | null } | null
+  } | null
+}
+
+export function LedgerItem({ entry, agencyId }: { entry: LedgerEntry, agencyId: string }) {
   const [loading, setLoading] = React.useState(false)
-  const pipeline = entry.pipeline as any
+  const pipeline = entry.pipeline
   const statusColor = entry.status === 'Received' ? '#10b981' : entry.status === 'Cancelled' ? '#ef4444' : '#f59e0b'
 
   async function handleUpdate(newStatus: 'Received' | 'Cancelled' | 'Pending') {

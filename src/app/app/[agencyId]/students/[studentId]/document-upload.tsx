@@ -35,7 +35,7 @@ export function DocumentUpload({ agencyId, studentId }: DocumentUploadProps) {
     try {
       // Upload to Supabase Storage
       const path = `${agencyId}/${studentId}/${Date.now()}-${file.name}`
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('documents')
         .upload(path, file)
 

@@ -3,7 +3,6 @@
 import * as React from 'react'
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { getInitials, stageColor } from '@/lib/utils'
 import { updateStage } from '@/app/actions/pipeline'

@@ -1,7 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import { CheckCircle2, ExternalLink, Image, Info, Plus, Save, Send, Trash2, UserRound } from 'lucide-react'
+import Image from 'next/image'
+import { CheckCircle2, ExternalLink, Image as ImageIcon, Info, Plus, Save, Send, Trash2, UserRound } from 'lucide-react'
 import { saveWebsiteContent } from '@/app/actions/website-content'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -429,9 +430,16 @@ function ImageUploadField({
       <div className="grid gap-3 md:grid-cols-[128px_1fr]">
         <div className="flex h-28 items-center justify-center overflow-hidden rounded-[8px] border border-[#2A2A2A] bg-[#111111]">
           {value ? (
-            <img src={value} alt="" className="h-full w-full object-cover" />
+            <Image
+              src={value}
+              alt={label}
+              width={128}
+              height={112}
+              unoptimized
+              className="h-full w-full object-cover"
+            />
           ) : (
-            <Image className="h-7 w-7 text-[#606060]" />
+            <ImageIcon className="h-7 w-7 text-[#606060]" />
           )}
         </div>
         <div className="space-y-2">
@@ -467,7 +475,7 @@ function ImageUploadField({
 }
 
 function EmptySection({ section, onAdd }: { section: SectionKey; onAdd: () => void }) {
-  const Icon = section === 'photos' ? Image : section === 'staff' ? UserRound : Plus
+  const Icon = section === 'photos' ? ImageIcon : section === 'staff' ? UserRound : Plus
 
   return (
     <div className="flex min-h-56 flex-col items-center justify-center rounded-[8px] border border-dashed border-[#2A2A2A] bg-[#0A0A0A] px-4 text-center">

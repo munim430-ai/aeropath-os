@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { 
-  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, 
+  XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, BarChart, Bar 
 } from 'recharts'
 import { Card, CardContent } from '@/components/ui/card'
@@ -12,10 +12,27 @@ import { formatCurrency, cn, formatDate } from '@/lib/utils'
 import { AddFinanceDialog } from './add-finance-dialog'
 import { deleteCashEntry, deleteBankTransaction } from '@/app/actions/finance'
 
+type CashEntry = {
+  id: string
+  date: string
+  description: string | null
+  category: string | null
+  amount: number
+  type: 'In' | 'Out'
+}
+
+type BankTransaction = {
+  id: string
+  date: string
+  description: string | null
+  amount: number
+  type: 'Deposit' | 'Withdrawal'
+}
+
 interface Props {
   data: {
-    cash: any[]
-    bank: any[]
+    cash: CashEntry[]
+    bank: BankTransaction[]
   }
   agencyId: string
 }
@@ -227,7 +244,19 @@ export function FinancialDashboard({ data, agencyId }: Props) {
   )
 }
 
-function StatCard({ label, value, icon: Icon, color, sub }: any) {
+function StatCard({
+  color,
+  icon: Icon,
+  label,
+  sub,
+  value,
+}: {
+  color: string
+  icon: React.ElementType
+  label: string
+  sub: string
+  value: number
+}) {
   return (
     <Card>
       <CardContent className="pt-5 pb-4">
@@ -246,12 +275,20 @@ function StatCard({ label, value, icon: Icon, color, sub }: any) {
   )
 }
 
-function CustomTooltip({ active, payload, label }: any) {
+function CustomTooltip({
+  active,
+  label,
+  payload,
+}: {
+  active?: boolean
+  label?: string
+  payload?: Array<{ name?: string; value?: number }>
+}) {
   if (active && payload && payload.length) {
     return (
       <div className="bg-[#0A0A0A] border border-[#1E1E1E] rounded-lg p-3 shadow-xl">
         <p className="text-xs font-medium text-[#F5F5F5] mb-1">{label || payload[0].name}</p>
-        <p className="text-sm font-bold text-[var(--tenant-primary)]">{formatCurrency(payload[0].value)}</p>
+        <p className="text-sm font-bold text-[var(--tenant-primary)]">{formatCurrency(payload[0].value ?? 0)}</p>
       </div>
     )
   }

@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
-import { Check, Circle } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { updateTaskStatus } from '@/app/actions/tasks'
 import type { TaskStatus } from '@/lib/types'
 

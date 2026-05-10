@@ -13,7 +13,10 @@ export async function updateLedgerStatus(
   if (!agencyUuid) return { error: 'Unauthorized' }
   const supabase = await createClient()
 
-  const updates: any = { status }
+  const updates: {
+    status: 'Pending' | 'Received' | 'Cancelled'
+    expected_commission?: number
+  } = { status }
   if (amount !== undefined) updates.expected_commission = amount
 
   const { error } = await supabase

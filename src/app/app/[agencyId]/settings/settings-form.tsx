@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -68,7 +69,14 @@ export function SettingsForm({ agency }: { agency: Agency }) {
         <label className="text-xs font-medium text-[#A0A0A0]">Logo</label>
         <div className="flex items-center gap-3">
           {agency.logo_url && (
-            <img src={agency.logo_url} alt="logo" className="h-10 w-10 rounded-[6px] object-cover border border-[#2A2A2A]" />
+            <Image
+              src={agency.logo_url}
+              alt={`${agency.name} logo`}
+              width={40}
+              height={40}
+              unoptimized
+              className="h-10 w-10 rounded-[6px] object-cover border border-[#2A2A2A]"
+            />
           )}
           <input
             type="file"
