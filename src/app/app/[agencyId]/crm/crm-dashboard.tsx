@@ -41,6 +41,7 @@ import {
   convertLeadToStudentAndPipeline,
   createLead,
   createLeadFollowUp,
+  sendPortalAccessForLead,
   updateLeadStatus,
 } from '@/app/actions/crm'
 import { LEAD_SOURCES, LEAD_STATUSES } from '@/lib/crm'
@@ -455,16 +456,19 @@ function LeadDetailDialog({
   const [open, setOpen] = React.useState(false)
   const [loading, setLoading] = React.useState<string | null>(null)
   const [error, setError] = React.useState<string | null>(null)
+  const [message, setMessage] = React.useState<string | null>(null)
 
-  async function runAction(name: string, action: () => Promise<{ error?: string }>) {
+  async function runAction(name: string, action: () => Promise<{ error?: string; success?: string | boolean }>) {
     setLoading(name)
     setError(null)
+    setMessage(null)
     const result = await action()
     if (result.error) {
       setError(result.error)
       setLoading(null)
       return
     }
+    if (typeof result.success === 'string') setMessage(result.success)
     setLoading(null)
     router.refresh()
   }
@@ -601,6 +605,20 @@ function LeadDetailDialog({
                 <CheckCircle2 className="h-4 w-4" />
                 {lead.status === 'Converted' ? 'Already Converted' : 'Convert Lead'}
               </Button>
+              {lead.status === 'Converted' && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={!lead.email}
+                  loading={loading === 'portal-access'}
+                  onClick={() =>
+                    void runAction('portal-access', () => sendPortalAccessForLead(agencyId, lead.id))
+                  }
+                >
+                  <Mail className="h-4 w-4" />
+                  Send Portal Access
+                </Button>
+              )}
             </form>
           </div>
 
@@ -629,6 +647,11 @@ function LeadDetailDialog({
           {error && (
             <p className="rounded-[6px] border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-400">
               {error}
+            </p>
+          )}
+          {message && (
+            <p className="rounded-[6px] border border-green-500/20 bg-green-500/10 px-3 py-2 text-xs text-green-300">
+              {message}
             </p>
           )}
         </div>

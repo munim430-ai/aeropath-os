@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, getAgencyUUID } from '@/lib/supabase/server'
+import { sendStudentPortalMagicLink } from '@/app/actions/student-portal'
 import {
   calculateLeadScore,
   normalizeNullableText,
@@ -295,4 +296,25 @@ export async function convertLeadToStudentAndPipeline(
   revalidatePath(`/app/${agencyId}/students`)
   revalidatePath(`/app/${agencyId}/pipeline`)
   return { success: true, studentId: student.id, pipelineId: pipeline.id }
+}
+
+export async function sendPortalAccessForLead(agencyId: string, leadId: string) {
+  const agencyUuid = await getAgencyUUID(agencyId)
+  if (!agencyUuid) return { error: 'Unauthorized' }
+  const supabase = await createClient()
+
+  const { data: lead, error } = await supabase
+    .from('sales_leads')
+    .select('email, status, converted_student_id')
+    .eq('id', leadId)
+    .eq('agency_id', agencyUuid)
+    .single()
+
+  if (error || !lead) return { error: error?.message ?? 'Lead not found' }
+  if (lead.status !== 'Converted' || !lead.converted_student_id) {
+    return { error: 'Convert the lead before sending portal access.' }
+  }
+  if (!lead.email) return { error: 'Student email is required before sending portal access.' }
+
+  return sendStudentPortalMagicLink(agencyId, lead.email)
 }

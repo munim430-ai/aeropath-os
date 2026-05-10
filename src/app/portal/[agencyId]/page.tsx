@@ -42,7 +42,7 @@ export default async function StudentPortalLoginPage({
       .ilike('email', normalizePortalEmail(user.email))
       .maybeSingle()
 
-    if (student) redirect(`/portal/${agencyId}/documents`)
+    if (student) redirect(`/portal/${agencyId}/dashboard`)
   }
 
   return (

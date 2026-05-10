@@ -57,12 +57,34 @@ export async function saveDocumentWithAI(
 
   const aiData = await extractDocumentData(ocrText)
 
+  const { data: latestDocument } = await supabase
+    .from('document_vault')
+    .select('version_number')
+    .eq('agency_id', agencyUuid)
+    .eq('student_id', studentId)
+    .eq('type', type)
+    .order('version_number', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const nextVersion = (latestDocument?.version_number ?? 0) + 1
+
+  await supabase
+    .from('document_vault')
+    .update({ is_current: false })
+    .eq('agency_id', agencyUuid)
+    .eq('student_id', studentId)
+    .eq('type', type)
+
   const { data: doc, error } = await supabase.from('document_vault').insert({
     agency_id: agencyUuid,
     student_id: studentId,
     type,
     file_url: fileUrl,
     file_name: fileName,
+    version_number: nextVersion,
+    is_current: true,
+    uploaded_by: 'staff',
     ai_parsed_data: aiData,
   }).select().single()
 
@@ -82,6 +104,8 @@ export async function saveDocumentWithAI(
   }
 
   revalidatePath(`/app/${agencyId}/students/${studentId}`)
+  revalidatePath(`/portal/${agencyId}/dashboard`)
+  revalidatePath(`/portal/${agencyId}/documents`)
   return { success: true, document: doc, extracted: aiData }
 }
 

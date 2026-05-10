@@ -61,6 +61,9 @@ export interface DocumentVault {
   type: DocumentType
   file_url: string
   file_name: string
+  version_number: number
+  is_current: boolean
+  uploaded_by: 'student_portal' | 'staff'
   ai_parsed_data: Record<string, unknown> | null
   created_at: string
 }

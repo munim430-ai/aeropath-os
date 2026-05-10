@@ -421,3 +421,11 @@ create policy "Agency members manage sales leads" on sales_leads
 create index if not exists sales_leads_agency_status_idx on sales_leads (agency_id, status);
 create index if not exists sales_leads_agency_assignee_idx on sales_leads (agency_id, assigned_to_id);
 create index if not exists task_dispatcher_lead_id_idx on task_dispatcher (lead_id);
+
+-- 15. Student Portal Upgrade
+alter table document_vault add column if not exists version_number integer default 1 not null;
+alter table document_vault add column if not exists is_current boolean default true not null;
+alter table document_vault add column if not exists uploaded_by text check (uploaded_by in ('student_portal', 'staff')) default 'staff' not null;
+
+create index if not exists document_vault_student_type_current_idx
+  on document_vault (agency_id, student_id, type, is_current);
