@@ -2,19 +2,20 @@
 
 import * as React from 'react'
 import Image from 'next/image'
-import { CheckCircle2, ExternalLink, Image as ImageIcon, Info, Plus, Save, Send, Trash2, UserRound } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, ExternalLink, Eye, Image as ImageIcon, Info, Plus, Save, Send, Trash2, UserRound } from 'lucide-react'
 import { saveWebsiteContent } from '@/app/actions/website-content'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
-import { createContentId, normalizeWebsiteContent } from '@/lib/website-content'
+import { createContentId, getWebsiteContentHealth, normalizeWebsiteContent } from '@/lib/website-content'
 import type {
   WebsiteContent,
   WebsiteContentData,
   WebsiteBlogPost,
   WebsiteFAQ,
+  WebsiteMediaAsset,
   WebsitePhoto,
   WebsiteProgramme,
   WebsiteStaffMember,
@@ -22,7 +23,7 @@ import type {
   WebsiteUniversity,
 } from '@/lib/types'
 
-type SectionKey = keyof WebsiteContentData
+type SectionKey = Exclude<keyof WebsiteContentData, 'site' | 'mediaLibrary'>
 
 const sectionMeta: Record<SectionKey, {
   anchor: string
@@ -153,14 +154,72 @@ export function WebsiteContentEditor({ agencyId, initialContent, websiteUrl }: W
   const currentCount = content[activeSection].length
   const activeMeta = sectionMeta[activeSection]
   const previewUrl = getPreviewUrl(websiteUrl, activeMeta.anchor)
+  const sitePreviewUrl = getPreviewUrl(websiteUrl, '')
+  const health = getWebsiteContentHealth(content)
+
+  function updateSite<T extends keyof WebsiteContentData['site']>(
+    section: T,
+    patch: Partial<WebsiteContentData['site'][T]>
+  ) {
+    setContent((current) => ({
+      ...current,
+      site: {
+        ...current.site,
+        [section]: {
+          ...current.site[section],
+          ...patch,
+        },
+      },
+    }))
+  }
+
+  function addMediaAsset() {
+    setContent((current) => ({
+      ...current,
+      mediaLibrary: [
+        ...current.mediaLibrary,
+        { id: createContentId('media'), url: '', alt: '', type: 'image' },
+      ],
+    }))
+  }
+
+  function updateMediaAsset(id: string, patch: Partial<WebsiteMediaAsset>) {
+    setContent((current) => ({
+      ...current,
+      mediaLibrary: current.mediaLibrary.map((item) => item.id === id ? { ...item, ...patch } : item),
+    }))
+  }
+
+  function removeMediaAsset(id: string) {
+    setContent((current) => ({
+      ...current,
+      mediaLibrary: current.mediaLibrary.filter((item) => item.id !== id),
+    }))
+  }
 
   return (
     <div className="grid gap-5 xl:grid-cols-[220px_1fr]">
       <Card className="self-start">
         <CardHeader>
-          <CardTitle>Sections</CardTitle>
+          <CardTitle>CMS</CardTitle>
         </CardHeader>
         <CardContent className="space-y-1">
+          <a
+            href={sitePreviewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mb-3 flex h-9 w-full items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[#2A2A2A] bg-[#1A1A1A] px-3 text-sm text-[#F5F5F5] transition-colors hover:bg-[#222222]"
+          >
+            <Eye className="h-4 w-4" />
+            Live Preview
+          </a>
+          <div className="mb-3 rounded-[8px] border border-[#1E1E1E] bg-[#0A0A0A] p-3">
+            <p className="text-xs font-medium text-[#F5F5F5]">Content Health</p>
+            <p className={cn('mt-1 text-xl font-semibold', health.totalIssues ? 'text-[#f59e0b]' : 'text-[#10b981]')}>
+              {health.totalIssues}
+            </p>
+            <p className="text-xs text-[#606060]">{health.totalIssues === 1 ? 'issue' : 'issues'}</p>
+          </div>
           {sections.map((section) => (
             <button
               key={section.key}
@@ -181,6 +240,101 @@ export function WebsiteContentEditor({ agencyId, initialContent, websiteUrl }: W
       </Card>
 
       <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div>
+                <CardTitle>Website Control Panel</CardTitle>
+                <p className="mt-1 text-xs text-[#606060]">
+                  Manage public website copy, SEO, contact details, media, and repeatable sections.
+                </p>
+              </div>
+              <Button asChild type="button" variant="secondary" size="sm">
+                <a href={sitePreviewUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4" />
+                  Open Website
+                </a>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {health.totalIssues > 0 && (
+              <div className="rounded-[8px] border border-[#f59e0b]/20 bg-[#f59e0b]/10 p-3">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#f59e0b]" />
+                  <div>
+                    <p className="text-sm font-medium text-[#F5F5F5]">Recommended before publishing</p>
+                    <ul className="mt-2 space-y-1">
+                      {health.issues.map((issue) => (
+                        <li key={issue} className="text-xs text-[#A0A0A0]">{issue}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="grid gap-3 xl:grid-cols-2">
+              <ContentPanel title="Hero">
+                <Input label="Headline" value={content.site.hero.headline} onChange={(event) => updateSite('hero', { headline: event.target.value })} />
+                <Input label="CTA Label" value={content.site.hero.cta_label} onChange={(event) => updateSite('hero', { cta_label: event.target.value })} />
+                <Input label="CTA URL" value={content.site.hero.cta_url} onChange={(event) => updateSite('hero', { cta_url: event.target.value })} />
+                <Textarea label="Subheadline" value={content.site.hero.subheadline} onChange={(event) => updateSite('hero', { subheadline: event.target.value })} />
+                <ImageUploadField section="hero" itemId="site-hero" label="Hero Background" value={content.site.hero.background_image_url} onChange={(background_image_url) => updateSite('hero', { background_image_url })} />
+              </ContentPanel>
+
+              <ContentPanel title="About">
+                <Input label="Heading" value={content.site.about.heading} onChange={(event) => updateSite('about', { heading: event.target.value })} />
+                <ImageUploadField section="about" itemId="site-about" label="About Image" value={content.site.about.image_url} onChange={(image_url) => updateSite('about', { image_url })} />
+                <Textarea label="Body" value={content.site.about.body} onChange={(event) => updateSite('about', { body: event.target.value })} />
+              </ContentPanel>
+
+              <ContentPanel title="Contact Info">
+                <Input label="Phone" value={content.site.contact.phone} onChange={(event) => updateSite('contact', { phone: event.target.value })} />
+                <Input label="Email" value={content.site.contact.email} onChange={(event) => updateSite('contact', { email: event.target.value })} />
+                <Input label="WhatsApp" value={content.site.contact.whatsapp} onChange={(event) => updateSite('contact', { whatsapp: event.target.value })} />
+                <Textarea label="Address" value={content.site.contact.address} onChange={(event) => updateSite('contact', { address: event.target.value })} />
+              </ContentPanel>
+
+              <ContentPanel title="SEO">
+                <Input label="Page Title" value={content.site.seo.title} onChange={(event) => updateSite('seo', { title: event.target.value })} />
+                <ImageUploadField section="seo" itemId="site-seo" label="OG Image" value={content.site.seo.og_image_url} onChange={(og_image_url) => updateSite('seo', { og_image_url })} />
+                <Textarea label="Meta Description" value={content.site.seo.description} onChange={(event) => updateSite('seo', { description: event.target.value })} />
+              </ContentPanel>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <CardTitle>Media Library</CardTitle>
+                <p className="mt-1 text-xs text-[#606060]">{content.mediaLibrary.length} reusable assets</p>
+              </div>
+              <Button type="button" variant="secondary" size="sm" onClick={addMediaAsset}>
+                <Plus className="h-4 w-4" />
+                Add Media
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {content.mediaLibrary.length === 0 ? (
+              <EmptySection section="photos" onAdd={addMediaAsset} />
+            ) : (
+              <div className="grid gap-3 lg:grid-cols-2">
+                {content.mediaLibrary.map((asset) => (
+                  <ContentPanel key={asset.id} title={asset.alt || 'Media Asset'} onDelete={() => removeMediaAsset(asset.id)}>
+                    <ImageUploadField section="media" itemId={asset.id} label="Asset" value={asset.url} onChange={(url) => updateMediaAsset(asset.id, { url })} />
+                    <Input label="Alt Text" value={asset.alt} onChange={(event) => updateMediaAsset(asset.id, { alt: event.target.value })} />
+                    <Input label="Type" value={asset.type} onChange={(event) => updateMediaAsset(asset.id, { type: event.target.value })} />
+                  </ContentPanel>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader className="gap-4">
             <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
@@ -349,15 +503,17 @@ function ContentPanel({
 }: {
   children: React.ReactNode
   title: string
-  onDelete: () => void
+  onDelete?: () => void
 }) {
   return (
     <div className="rounded-[8px] border border-[#1E1E1E] bg-[#0A0A0A] p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
         <p className="truncate text-sm font-medium text-[#F5F5F5]">{title}</p>
-        <Button type="button" variant="ghost" size="icon" onClick={onDelete} title="Delete item">
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {onDelete && (
+          <Button type="button" variant="ghost" size="icon" onClick={onDelete} title="Delete item">
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       <div className="grid gap-3 md:grid-cols-2">{children}</div>
     </div>
@@ -369,7 +525,7 @@ function getPreviewUrl(websiteUrl: string | null, anchor: string) {
   const baseUrl = websiteUrl?.trim() || fallback
   const normalized = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`
 
-  return `${normalized.replace(/\/$/, '')}/#${anchor}`
+  return anchor ? `${normalized.replace(/\/$/, '')}/#${anchor}` : normalized.replace(/\/$/, '')
 }
 
 function ImageUploadField({
@@ -382,7 +538,7 @@ function ImageUploadField({
   itemId: string
   label: string
   onChange: (value: string) => void
-  section: SectionKey
+  section: string
   value: string
 }) {
   const [uploading, setUploading] = React.useState(false)
@@ -474,7 +630,7 @@ function ImageUploadField({
   )
 }
 
-function EmptySection({ section, onAdd }: { section: SectionKey; onAdd: () => void }) {
+function EmptySection({ section, onAdd }: { section: SectionKey | string; onAdd: () => void }) {
   const Icon = section === 'photos' ? ImageIcon : section === 'staff' ? UserRound : Plus
 
   return (

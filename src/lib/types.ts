@@ -272,7 +272,50 @@ export interface WebsiteBlogPost {
   url: string
 }
 
+export interface WebsiteHeroContent {
+  headline: string
+  subheadline: string
+  cta_label: string
+  cta_url: string
+  background_image_url: string
+}
+
+export interface WebsiteAboutContent {
+  heading: string
+  body: string
+  image_url: string
+}
+
+export interface WebsiteContactContent {
+  phone: string
+  email: string
+  address: string
+  whatsapp: string
+}
+
+export interface WebsiteSeoContent {
+  title: string
+  description: string
+  og_image_url: string
+}
+
+export interface WebsiteSiteContent {
+  hero: WebsiteHeroContent
+  about: WebsiteAboutContent
+  contact: WebsiteContactContent
+  seo: WebsiteSeoContent
+}
+
+export interface WebsiteMediaAsset {
+  id: string
+  url: string
+  alt: string
+  type: string
+}
+
 export interface WebsiteContentData {
+  site: WebsiteSiteContent
+  mediaLibrary: WebsiteMediaAsset[]
   photos: WebsitePhoto[]
   testimonials: WebsiteTestimonial[]
   staff: WebsiteStaffMember[]
