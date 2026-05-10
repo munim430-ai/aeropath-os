@@ -379,3 +379,45 @@ create policy "Agency members delete student tracking files" on storage.objects
       select agencies.subdomain from agencies where agencies.id = get_user_agency_id()
     )
   );
+
+-- 14. Lead & Sales CRM MVP
+create table if not exists sales_leads (
+  id                    uuid primary key default uuid_generate_v4(),
+  agency_id             uuid references agencies(id) on delete cascade not null,
+  assigned_to_id        uuid references users(id) on delete set null,
+  full_name             text not null,
+  email                 text,
+  phone                 text,
+  whatsapp_number       text,
+  source                text check (source in ('Website', 'Facebook', 'Walk-in', 'Referral', 'Phone', 'Other')) default 'Website' not null,
+  status                text check (status in ('New', 'Contacted', 'Qualified', 'Converted', 'Lost')) default 'New' not null,
+  score                 integer check (score >= 0 and score <= 100) default 10 not null,
+  preferred_country     text,
+  program_level         text,
+  desired_university    text,
+  preferred_intake      text,
+  notes                 text,
+  lost_reason           text,
+  converted_student_id  uuid references student_profiles(id) on delete set null,
+  converted_pipeline_id uuid references application_pipeline(id) on delete set null,
+  created_at            timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at            timestamp with time zone default timezone('utc'::text, now()) not null,
+  constraint sales_leads_contact_required check (
+    nullif(trim(coalesce(phone, '')), '') is not null
+    or nullif(trim(coalesce(email, '')), '') is not null
+  )
+);
+
+alter table task_dispatcher
+  add column if not exists lead_id uuid references sales_leads(id) on delete set null;
+
+alter table sales_leads enable row level security;
+
+drop policy if exists "Agency members manage sales leads" on sales_leads;
+create policy "Agency members manage sales leads" on sales_leads
+  for all using (agency_id = get_user_agency_id())
+  with check (agency_id = get_user_agency_id());
+
+create index if not exists sales_leads_agency_status_idx on sales_leads (agency_id, status);
+create index if not exists sales_leads_agency_assignee_idx on sales_leads (agency_id, assigned_to_id);
+create index if not exists task_dispatcher_lead_id_idx on task_dispatcher (lead_id);

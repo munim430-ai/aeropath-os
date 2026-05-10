@@ -15,6 +15,7 @@ import {
   Search,
   Globe,
   PanelsTopLeft,
+  UserRoundSearch,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -28,6 +29,7 @@ interface SidebarProps {
 
 const navItems = (agencyId: string) => [
   { href: `/app/${agencyId}`, icon: LayoutDashboard, label: 'Dashboard' },
+  { href: `/app/${agencyId}/crm`, icon: UserRoundSearch, label: 'CRM' },
   { href: `/app/${agencyId}/students`, icon: Users, label: 'Students' },
   { href: `/app/${agencyId}/pipeline`, icon: Layers, label: 'Pipeline' },
   { href: `/app/${agencyId}/universities`, icon: GraduationCap, label: 'Universities' },

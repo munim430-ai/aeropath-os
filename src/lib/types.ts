@@ -13,6 +13,10 @@ export type DocumentType = 'Passport' | 'Transcript' | 'IELTS' | 'CV' | 'Other'
 
 export type FinancialStatus = 'Pending' | 'Received' | 'Cancelled'
 
+export type LeadSource = 'Website' | 'Facebook' | 'Walk-in' | 'Referral' | 'Phone' | 'Other'
+
+export type LeadStatus = 'New' | 'Contacted' | 'Qualified' | 'Converted' | 'Lost'
+
 export interface Agency {
   id: string
   name: string
@@ -95,12 +99,38 @@ export interface TaskDispatcher {
   id: string
   agency_id: string
   assigned_to_id: string | null
+  lead_id: string | null
   title: string
   description: string | null
   status: TaskStatus
   due_date: string | null
   created_at: string
   assigned_to?: User
+}
+
+export interface SalesLead {
+  id: string
+  agency_id: string
+  assigned_to_id: string | null
+  full_name: string
+  email: string | null
+  phone: string | null
+  whatsapp_number: string | null
+  source: LeadSource
+  status: LeadStatus
+  score: number
+  preferred_country: string | null
+  program_level: string | null
+  desired_university: string | null
+  preferred_intake: string | null
+  notes: string | null
+  lost_reason: string | null
+  converted_student_id: string | null
+  converted_pipeline_id: string | null
+  created_at: string
+  updated_at: string
+  assigned_to?: User | null
+  follow_ups?: TaskDispatcher[]
 }
 
 export interface FinancialLedger {
