@@ -36,3 +36,7 @@ export function getCleanupSummary({
     ? `This will remove ${parts.join(' and ')}.`
     : 'This will remove selected agency demo data.'
 }
+
+export function getStudentDeleteSummary(studentName: string) {
+  return `This will delete ${studentName || 'this student'} and related applications, checklist items, ledger entries, and document records.`
+}

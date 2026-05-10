@@ -1,12 +1,9 @@
 import { getDashboardStats } from '@/app/actions/pipeline'
-import { clearApplicationPipeline } from '@/app/actions/admin-controls'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDate, stageColor } from '@/lib/utils'
 import { AgencyLogoUploader } from '@/components/agency-logo-uploader'
-import { DangerCleanupButton } from '@/components/danger-cleanup-button'
-import { getCleanupSummary } from '@/lib/admin-controls'
 import { Users, Layers, DollarSign, CheckSquare, TrendingUp, Clock, Globe, ImageUp, AlertTriangle } from 'lucide-react'
 
 export default async function DashboardPage({
@@ -164,22 +161,12 @@ export default async function DashboardPage({
 
         <Card>
           <CardHeader>
-            <CardTitle>Demo Data Cleanup</CardTitle>
+            <CardTitle>Student Cleanup</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-[#A0A0A0]">
-              Remove pipeline demo applications from this agency. Student profiles and universities stay unchanged.
+              Open a pipeline application or student profile to delete one student and its related application records.
             </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <DangerCleanupButton
-                action={clearApplicationPipeline.bind(null, agencyId)}
-                buttonLabel="Clear Pipeline"
-                title="Clear pipeline data?"
-                description={getCleanupSummary({ pipelineCount: stats.totalApplications })}
-                confirmLabel="Clear Pipeline"
-                successNoun="pipeline applications"
-              />
-            </div>
           </CardContent>
         </Card>
       </div>

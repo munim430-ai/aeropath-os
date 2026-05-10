@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { createClient, getAgencyUUID } from '@/lib/supabase/server'
 
 export async function createStudent(agencyId: string, formData: FormData) {
@@ -91,4 +92,24 @@ export async function getStudent(agencyId: string, studentId: string) {
 
   if (error) return null
   return data
+}
+
+export async function deleteStudentProfile(agencyId: string, studentId: string) {
+  const agencyUuid = await getAgencyUUID(agencyId)
+  if (!agencyUuid) return { error: 'Unauthorized' }
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('student_profiles')
+    .delete()
+    .eq('id', studentId)
+    .eq('agency_id', agencyUuid)
+
+  if (error) return { error: error.message }
+
+  revalidatePath(`/app/${agencyId}`)
+  revalidatePath(`/app/${agencyId}/students`)
+  revalidatePath(`/app/${agencyId}/pipeline`)
+  revalidatePath(`/app/${agencyId}/financials`)
+  redirect(`/app/${agencyId}/pipeline`)
 }

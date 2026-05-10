@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   buildAgencyLogoPath,
   getCleanupSummary,
+  getStudentDeleteSummary,
   sanitizeStorageFileName,
 } from './admin-controls'
 
@@ -21,5 +22,12 @@ test('getCleanupSummary describes destructive cleanup counts', () => {
   assert.equal(
     getCleanupSummary({ pipelineCount: 3, universityCount: 2 }),
     'This will remove 3 pipeline applications and 2 agency universities.'
+  )
+})
+
+test('getStudentDeleteSummary describes per-student cascade cleanup', () => {
+  assert.equal(
+    getStudentDeleteSummary('Munum'),
+    'This will delete Munum and related applications, checklist items, ledger entries, and document records.'
   )
 })

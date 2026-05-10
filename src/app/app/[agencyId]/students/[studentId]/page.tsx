@@ -9,6 +9,7 @@ import { getInitials, formatDate } from '@/lib/utils'
 import { DocumentUpload } from './document-upload'
 import { CheckCircle, XCircle, GraduationCap, FileText, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { DeleteStudentButton } from '@/components/delete-student-button'
 
 export default async function StudentProfilePage({
   params,
@@ -50,7 +51,7 @@ export default async function StudentProfilePage({
             )}
           </div>
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex flex-wrap justify-end gap-2">
           {student.whatsapp_number && (
             <a 
               href={`https://wa.me/${student.whatsapp_number.replace(/\D/g, '')}`} 
@@ -63,6 +64,7 @@ export default async function StudentProfilePage({
               </Button>
             </a>
           )}
+          <DeleteStudentButton agencyId={agencyId} studentId={studentId} studentName={student.full_name} />
         </div>
       </div>
 

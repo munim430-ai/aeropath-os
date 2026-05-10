@@ -5,6 +5,7 @@ import { getApplicationOperations } from '@/app/actions/visa-operations'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { DeleteStudentButton } from '@/components/delete-student-button'
 import { formatDate, stageColor } from '@/lib/utils'
 import { ApplicationOperationsPanel } from './application-operations-panel'
 
@@ -40,6 +41,9 @@ export default async function ApplicationDetailPage({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {student?.id && (
+            <DeleteStudentButton agencyId={agencyId} studentId={student.id} studentName={student.full_name} />
+          )}
           <Badge color={stageColor(application.stage)}>{application.stage}</Badge>
           <Badge color={attentionColor(attentionLevel)}>{attentionLevel}</Badge>
           <Badge color="#6366f1">{progress.percent}% checklist</Badge>
