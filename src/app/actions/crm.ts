@@ -9,6 +9,7 @@ import {
   validateLeadConversion,
   validateLeadInput,
 } from '@/lib/crm'
+import { getChecklistTemplateForCountry } from '@/lib/visa-operations'
 import type { LeadSource, LeadStatus, SalesLead, TaskDispatcher } from '@/lib/types'
 
 function getLeadPayload(formData: FormData, status: LeadStatus = 'New') {
@@ -277,6 +278,39 @@ export async function convertLeadToStudentAndPipeline(
     expected_commission: 0,
     status: 'Pending',
   })
+
+  const { data: selectedUniversity } = await supabase
+    .from('partner_universities')
+    .select('country')
+    .eq('id', universityId)
+    .maybeSingle()
+
+  const template = getChecklistTemplateForCountry(selectedUniversity?.country ?? lead.preferred_country)
+  const { data: checklist } = await supabase
+    .from('application_checklists')
+    .insert({
+      agency_id: agencyUuid,
+      pipeline_id: pipeline.id,
+      country: selectedUniversity?.country ?? lead.preferred_country,
+      template_key: template.countryKey,
+    })
+    .select('id')
+    .single()
+
+  if (checklist) {
+    await supabase.from('application_checklist_items').insert(
+      template.items.map((item) => ({
+        agency_id: agencyUuid,
+        checklist_id: checklist.id,
+        pipeline_id: pipeline.id,
+        title: item.title,
+        description: item.description,
+        is_required: item.is_required,
+        sort_order: item.sort_order,
+        status: 'Pending',
+      }))
+    )
+  }
 
   const { error: updateError } = await supabase
     .from('sales_leads')

@@ -7,7 +7,7 @@ import { formatCurrency, formatDate, stageColor } from '@/lib/utils'
 import { AgencyLogoUploader } from '@/components/agency-logo-uploader'
 import { DangerCleanupButton } from '@/components/danger-cleanup-button'
 import { getCleanupSummary } from '@/lib/admin-controls'
-import { Users, Layers, DollarSign, CheckSquare, TrendingUp, Clock, Globe, ImageUp } from 'lucide-react'
+import { Users, Layers, DollarSign, CheckSquare, TrendingUp, Clock, Globe, ImageUp, AlertTriangle } from 'lucide-react'
 
 export default async function DashboardPage({
   params,
@@ -130,6 +130,23 @@ export default async function DashboardPage({
         </Card>
       </div>
 
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Operational Alerts</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-[#f59e0b]" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 md:grid-cols-4">
+            <AlertMetric label="Urgent Deadlines" value={stats.operationalAlerts.urgentDeadlines} color="#ef4444" />
+            <AlertMetric label="Missing Checklist Items" value={stats.operationalAlerts.missingChecklistItems} color="#f59e0b" />
+            <AlertMetric label="Stalled Files" value={stats.operationalAlerts.stalledApplications} color="#38bdf8" />
+            <AlertMetric label="Visa Attention" value={stats.operationalAlerts.visaFilesNeedingAttention} color="#8b5cf6" />
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {stats.agency && (
           <Card>
@@ -166,6 +183,15 @@ export default async function DashboardPage({
           </CardContent>
         </Card>
       </div>
+    </div>
+  )
+}
+
+function AlertMetric({ color, label, value }: { color: string; label: string; value: number }) {
+  return (
+    <div className="rounded-[8px] border border-[#1E1E1E] bg-[#0A0A0A] p-3">
+      <p className="text-xs text-[#606060]">{label}</p>
+      <p className="mt-1 text-2xl font-semibold" style={{ color }}>{value}</p>
     </div>
   )
 }

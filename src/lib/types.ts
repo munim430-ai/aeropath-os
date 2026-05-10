@@ -17,6 +17,10 @@ export type LeadSource = 'Website' | 'Facebook' | 'Walk-in' | 'Referral' | 'Phon
 
 export type LeadStatus = 'New' | 'Contacted' | 'Qualified' | 'Converted' | 'Lost'
 
+export type VisaStatus = 'Not Started' | 'Preparing' | 'Submitted' | 'Approved' | 'Rejected'
+
+export type ChecklistItemStatus = 'Pending' | 'Completed' | 'Not Required'
+
 export interface Agency {
   id: string
   name: string
@@ -95,6 +99,10 @@ export interface ApplicationPipeline {
   student_id: string
   university_id: string
   stage: ApplicationStage
+  visa_status: VisaStatus | null
+  deadline_date: string | null
+  submitted_at: string | null
+  decision_at: string | null
   notes: string | null
   intake: string | null
   scholarship_amount: number | null
@@ -102,6 +110,30 @@ export interface ApplicationPipeline {
   updated_at: string
   student?: StudentProfile
   university?: PartnerUniversity
+}
+
+export interface ApplicationChecklist {
+  id: string
+  agency_id: string
+  pipeline_id: string
+  country: string | null
+  template_key: string
+  created_at: string
+}
+
+export interface ApplicationChecklistItem {
+  id: string
+  agency_id: string
+  checklist_id: string
+  pipeline_id: string
+  title: string
+  description: string | null
+  status: ChecklistItemStatus
+  is_required: boolean
+  sort_order: number
+  notes: string | null
+  completed_at: string | null
+  created_at: string
 }
 
 export interface TaskDispatcher {

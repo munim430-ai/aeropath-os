@@ -464,3 +464,52 @@ alter table partner_universities add column if not exists program_levels text[] 
 
 create index if not exists partner_universities_country_idx on partner_universities (country);
 create index if not exists partner_universities_deadline_idx on partner_universities (application_deadline);
+
+-- 17. Application & Visa Operations MVP
+alter table application_pipeline add column if not exists visa_status text
+  check (visa_status in ('Not Started', 'Preparing', 'Submitted', 'Approved', 'Rejected'))
+  default 'Not Started';
+alter table application_pipeline add column if not exists deadline_date date;
+alter table application_pipeline add column if not exists submitted_at timestamp with time zone;
+alter table application_pipeline add column if not exists decision_at timestamp with time zone;
+
+create table if not exists application_checklists (
+  id            uuid primary key default uuid_generate_v4(),
+  agency_id     uuid references agencies(id) on delete cascade not null,
+  pipeline_id   uuid references application_pipeline(id) on delete cascade not null,
+  country       text,
+  template_key  text not null default 'Generic',
+  created_at    timestamp with time zone default now() not null,
+  unique (pipeline_id)
+);
+
+create table if not exists application_checklist_items (
+  id            uuid primary key default uuid_generate_v4(),
+  agency_id     uuid references agencies(id) on delete cascade not null,
+  checklist_id  uuid references application_checklists(id) on delete cascade not null,
+  pipeline_id   uuid references application_pipeline(id) on delete cascade not null,
+  title         text not null,
+  description   text,
+  status        text check (status in ('Pending', 'Completed', 'Not Required')) default 'Pending' not null,
+  is_required   boolean default true not null,
+  sort_order    integer default 0 not null,
+  notes         text,
+  completed_at  timestamp with time zone,
+  created_at    timestamp with time zone default now() not null
+);
+
+alter table application_checklists enable row level security;
+alter table application_checklist_items enable row level security;
+
+drop policy if exists "Agency members manage application checklists" on application_checklists;
+drop policy if exists "Agency members manage application checklist items" on application_checklist_items;
+create policy "Agency members manage application checklists" on application_checklists
+  for all using (agency_id = get_user_agency_id())
+  with check (agency_id = get_user_agency_id());
+create policy "Agency members manage application checklist items" on application_checklist_items
+  for all using (agency_id = get_user_agency_id())
+  with check (agency_id = get_user_agency_id());
+
+create index if not exists application_checklists_pipeline_idx on application_checklists (pipeline_id);
+create index if not exists application_checklist_items_pipeline_idx on application_checklist_items (pipeline_id);
+create index if not exists application_pipeline_deadline_idx on application_pipeline (deadline_date);

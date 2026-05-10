@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import Link from 'next/link'
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -88,7 +89,10 @@ export function KanbanBoard({ applications, agencyId }: KanbanBoardProps) {
                             opacity: snapshot.isDragging ? 0.9 : 1,
                           }}
                         >
-                          <div className="rounded-[8px] border border-[#2A2A2A] bg-[#1A1A1A] p-3 shadow-sm hover:border-[#3A3A3A] transition-colors">
+                          <Link
+                            href={`/app/${agencyId}/pipeline/${app.id}`}
+                            className="block rounded-[8px] border border-[#2A2A2A] bg-[#1A1A1A] p-3 shadow-sm transition-colors hover:border-[var(--tenant-primary)]/60 focus:outline-none focus:ring-2 focus:ring-[var(--tenant-primary)]"
+                          >
                             <div className="flex items-center gap-2 mb-2">
                               <Avatar className="h-6 w-6">
                                 <AvatarFallback className="text-[10px]">
@@ -127,7 +131,7 @@ export function KanbanBoard({ applications, agencyId }: KanbanBoardProps) {
                                 </Badge>
                               )}
                             </div>
-                          </div>
+                          </Link>
                         </div>
                       )}
                     </Draggable>

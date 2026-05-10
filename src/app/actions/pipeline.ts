@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, getAgencyUUID } from '@/lib/supabase/server'
+import { getApplicationAttentionLevel, getChecklistTemplateForCountry, getDaysSince, getDaysUntil } from '@/lib/visa-operations'
 import type { ApplicationStage } from '@/lib/types'
 
 export async function createApplication(
@@ -28,6 +29,39 @@ export async function createApplication(
     expected_commission: 0,
     status: 'Pending',
   })
+
+  const { data: university } = await supabase
+    .from('partner_universities')
+    .select('country')
+    .eq('id', universityId)
+    .maybeSingle()
+
+  const template = getChecklistTemplateForCountry(university?.country)
+  const { data: checklist } = await supabase
+    .from('application_checklists')
+    .insert({
+      agency_id: agencyUuid,
+      pipeline_id: data.id,
+      country: university?.country,
+      template_key: template.countryKey,
+    })
+    .select('id')
+    .single()
+
+  if (checklist) {
+    await supabase.from('application_checklist_items').insert(
+      template.items.map((item) => ({
+        agency_id: agencyUuid,
+        checklist_id: checklist.id,
+        pipeline_id: data.id,
+        title: item.title,
+        description: item.description,
+        is_required: item.is_required,
+        sort_order: item.sort_order,
+        status: 'Pending',
+      }))
+    )
+  }
 
   revalidatePath(`/app/${agencyId}/pipeline`)
   return { success: true, application: data }
@@ -83,15 +117,26 @@ export async function getDashboardStats(agencyId: string) {
     pendingRevenue: 0,
     intakeCounts: {},
     countryCounts: {},
+    operationalAlerts: {
+      urgentDeadlines: 0,
+      missingChecklistItems: 0,
+      stalledApplications: 0,
+      visaFilesNeedingAttention: 0,
+    },
   }
   const supabase = await createClient()
 
   const [students, pipeline, tasks, ledger] = await Promise.all([
     supabase.from('student_profiles').select('id', { count: 'exact', head: true }).eq('agency_id', agencyUuid),
-    supabase.from('application_pipeline').select('id, stage, intake').eq('agency_id', agencyUuid),
+    supabase.from('application_pipeline').select('*').eq('agency_id', agencyUuid),
     supabase.from('task_dispatcher').select('id, status, title, due_date, assigned_to_id').eq('agency_id', agencyUuid).eq('status', 'Pending').order('due_date', { ascending: true }).limit(5),
     supabase.from('financial_ledger').select('expected_commission, status').eq('agency_id', agencyUuid),
   ])
+
+  const { data: checklistItems } = await supabase
+    .from('application_checklist_items')
+    .select('pipeline_id, status, is_required')
+    .eq('agency_id', agencyUuid)
 
   const stageCounts = (pipeline.data ?? []).reduce<Record<string, number>>((acc, app) => {
     acc[app.stage] = (acc[app.stage] ?? 0) + 1
@@ -119,6 +164,39 @@ export async function getDashboardStats(agencyId: string) {
 
   const { data: agency } = await supabase.from('agencies').select('*').eq('id', agencyUuid).single()
 
+  const pipelineRows = pipeline.data ?? []
+  const missingByPipeline = (checklistItems ?? []).reduce<Record<string, number>>((acc, item) => {
+    if (item.is_required && item.status === 'Pending') {
+      acc[item.pipeline_id] = (acc[item.pipeline_id] ?? 0) + 1
+    }
+    return acc
+  }, {})
+
+  const operationalAlerts = pipelineRows.reduce(
+    (acc, app) => {
+      const daysInStage = getDaysSince(app.updated_at ?? app.created_at)
+      const deadlineDays = getDaysUntil(app.deadline_date)
+      const missingRequired = missingByPipeline[app.id] ?? 0
+      const attention = getApplicationAttentionLevel({
+        deadlineDate: app.deadline_date,
+        missingRequiredCount: missingRequired,
+        daysInStage,
+      })
+
+      if (deadlineDays != null && deadlineDays <= 7) acc.urgentDeadlines += 1
+      acc.missingChecklistItems += missingRequired
+      if (daysInStage >= 14) acc.stalledApplications += 1
+      if (app.stage === 'Visa' && attention !== 'On Track') acc.visaFilesNeedingAttention += 1
+      return acc
+    },
+    {
+      urgentDeadlines: 0,
+      missingChecklistItems: 0,
+      stalledApplications: 0,
+      visaFilesNeedingAttention: 0,
+    }
+  )
+
   return {
     agency,
     totalStudents: students.count ?? 0,
@@ -129,5 +207,6 @@ export async function getDashboardStats(agencyId: string) {
     pendingTasks: tasks.data ?? [],
     totalRevenue,
     pendingRevenue,
+    operationalAlerts,
   }
 }
