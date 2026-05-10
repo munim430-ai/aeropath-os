@@ -4,7 +4,11 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
-import { buildStudentProfileUpdate, normalizePortalEmail } from '@/lib/student-portal'
+import {
+  buildStudentPortalRedirectUrl,
+  buildStudentProfileUpdate,
+  normalizePortalEmail,
+} from '@/lib/student-portal'
 
 type ActionResult = {
   error?: string
@@ -54,8 +58,11 @@ export async function sendStudentPortalMagicLink(
   }
 
   const requestHeaders = await headers()
-  const origin = requestHeaders.get('origin') ?? process.env.NEXT_PUBLIC_SITE_URL ?? ''
-  const redirectTo = `${origin}/portal/${agencyId}/dashboard`
+  const redirectTo = buildStudentPortalRedirectUrl(agencyId, {
+    configuredSiteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+    requestOrigin: requestHeaders.get('origin'),
+    vercelUrl: process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL,
+  })
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithOtp({
     email,

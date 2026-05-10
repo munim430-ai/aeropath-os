@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
   buildStudentDocumentPath,
+  buildStudentPortalRedirectUrl,
   buildStudentProfileUpdate,
   getCurrentDocumentVersions,
   getMissingDocumentTypes,
@@ -26,6 +27,24 @@ describe('student portal helpers', () => {
     const path = buildStudentDocumentPath('demo', 'student-123', 'My Passport (Final).PDF', 1700000000000)
 
     assert.equal(path, 'demo/student-123/1700000000000-my-passport-final.pdf')
+  })
+
+  it('builds portal redirect URLs from the live site URL before request origin', () => {
+    const url = buildStudentPortalRedirectUrl('demo', {
+      configuredSiteUrl: 'https://aeropath-os.vercel.app/',
+      requestOrigin: 'http://localhost:3000',
+    })
+
+    assert.equal(url, 'https://aeropath-os.vercel.app/portal/demo/dashboard')
+  })
+
+  it('does not prefer a localhost configured site URL over a live request origin', () => {
+    const url = buildStudentPortalRedirectUrl('demo', {
+      configuredSiteUrl: 'http://localhost:3000',
+      requestOrigin: 'https://aeropath-os.vercel.app',
+    })
+
+    assert.equal(url, 'https://aeropath-os.vercel.app/portal/demo/dashboard')
   })
 
   it('detects common document types from file names', () => {

@@ -65,6 +65,40 @@ export function buildStudentDocumentPath(
   return `${agencyId}/${studentId}/${finalName}`
 }
 
+function normalizeSiteUrl(url?: string | null) {
+  return url?.trim().replace(/\/+$/, '') || null
+}
+
+function isLocalUrl(url: string) {
+  return /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?/i.test(url)
+}
+
+export function buildStudentPortalRedirectUrl(
+  agencyId: string,
+  options: {
+    configuredSiteUrl?: string | null
+    requestOrigin?: string | null
+    vercelUrl?: string | null
+  } = {}
+) {
+  const configuredSiteUrl = normalizeSiteUrl(options.configuredSiteUrl)
+  const requestOrigin = normalizeSiteUrl(options.requestOrigin)
+  const vercelUrl = normalizeSiteUrl(options.vercelUrl)
+
+  const baseUrl =
+    configuredSiteUrl && !isLocalUrl(configuredSiteUrl)
+      ? configuredSiteUrl
+      : requestOrigin && !isLocalUrl(requestOrigin)
+        ? requestOrigin
+        : configuredSiteUrl
+          ? configuredSiteUrl
+          : vercelUrl
+            ? `https://${vercelUrl.replace(/^https?:\/\//, '')}`
+            : 'https://aeropath-os.vercel.app'
+
+  return `${baseUrl}/portal/${agencyId}/dashboard`
+}
+
 function hasValue(value: unknown) {
   return value !== null && value !== undefined && String(value).trim() !== ''
 }
