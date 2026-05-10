@@ -147,6 +147,21 @@ create table if not exists student_payments (
   updated_at      timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- 11c. HRM Attendance
+create table if not exists hrm_attendance (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade not null,
+  user_id         uuid references users(id) on delete cascade not null,
+  attendance_date date default current_date not null,
+  clock_in_at     timestamp with time zone,
+  clock_out_at    timestamp with time zone,
+  status          text check (status in ('Present', 'Late', 'Absent', 'Leave')) default 'Present' not null,
+  notes           text,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at      timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique (agency_id, user_id, attendance_date)
+);
+
 -- 12. Website Content CMS
 create table if not exists website_content (
   id              uuid primary key default uuid_generate_v4(),
@@ -189,6 +204,7 @@ alter table task_dispatcher enable row level security;
 alter table cash_ledger enable row level security;
 alter table bank_transactions enable row level security;
 alter table student_payments enable row level security;
+alter table hrm_attendance enable row level security;
 alter table website_content enable row level security;
 alter table student_tracking_uploads enable row level security;
 
@@ -282,6 +298,9 @@ create policy "Agency members manage bank transactions" on bank_transactions for
 
 drop policy if exists "Agency members manage student payments" on student_payments;
 create policy "Agency members manage student payments" on student_payments for all using (agency_id = get_user_agency_id());
+
+drop policy if exists "Agency members manage attendance" on hrm_attendance;
+create policy "Agency members manage attendance" on hrm_attendance for all using (agency_id = get_user_agency_id());
 
 -- Policies for Website Content
 drop policy if exists "Agency members manage website content" on website_content;
@@ -575,3 +594,29 @@ create policy "Agency members manage student payments" on student_payments
 create index if not exists student_payments_agency_idx on student_payments (agency_id);
 create index if not exists student_payments_student_idx on student_payments (student_id);
 create index if not exists cash_ledger_student_idx on cash_ledger (student_id);
+
+-- 19. HRM MVP
+-- Run this appended block only on existing databases.
+create table if not exists hrm_attendance (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade not null,
+  user_id         uuid references users(id) on delete cascade not null,
+  attendance_date date default current_date not null,
+  clock_in_at     timestamp with time zone,
+  clock_out_at    timestamp with time zone,
+  status          text check (status in ('Present', 'Late', 'Absent', 'Leave')) default 'Present' not null,
+  notes           text,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at      timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique (agency_id, user_id, attendance_date)
+);
+
+alter table hrm_attendance enable row level security;
+
+drop policy if exists "Agency members manage attendance" on hrm_attendance;
+create policy "Agency members manage attendance" on hrm_attendance
+  for all using (agency_id = get_user_agency_id())
+  with check (agency_id = get_user_agency_id());
+
+create index if not exists hrm_attendance_agency_date_idx on hrm_attendance (agency_id, attendance_date);
+create index if not exists hrm_attendance_user_date_idx on hrm_attendance (user_id, attendance_date);

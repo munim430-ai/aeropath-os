@@ -17,6 +17,7 @@ import {
   Globe,
   PanelsTopLeft,
   UserRoundSearch,
+  BriefcaseBusiness,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -38,6 +39,7 @@ const navItems = (agencyId: string) => [
   { href: `/app/${agencyId}/website-content`, icon: PanelsTopLeft, label: 'Website Content' },
   { href: `/app/${agencyId}/tasks`, icon: CheckSquare, label: 'Tasks' },
   { href: `/app/${agencyId}/financials`, icon: DollarSign, label: 'Financials' },
+  { href: `/app/${agencyId}/hrm`, icon: BriefcaseBusiness, label: 'HRM' },
   { href: `/app/${agencyId}/settings`, icon: Settings, label: 'Settings' },
 ]
 
