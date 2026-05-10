@@ -429,3 +429,14 @@ alter table document_vault add column if not exists uploaded_by text check (uplo
 
 create index if not exists document_vault_student_type_current_idx
   on document_vault (agency_id, student_id, type, is_current);
+
+-- 16. Course & University Search Engine
+alter table partner_universities add column if not exists ranking integer;
+alter table partner_universities add column if not exists tuition_fee_min numeric;
+alter table partner_universities add column if not exists tuition_fee_max numeric;
+alter table partner_universities add column if not exists intakes text[] default '{}'::text[];
+alter table partner_universities add column if not exists application_deadline date;
+alter table partner_universities add column if not exists program_levels text[] default '{}'::text[];
+
+create index if not exists partner_universities_country_idx on partner_universities (country);
+create index if not exists partner_universities_deadline_idx on partner_universities (application_deadline);

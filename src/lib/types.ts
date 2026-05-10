@@ -73,6 +73,12 @@ export interface PartnerUniversity {
   agency_id: string | null
   name: string
   country: string | null
+  ranking: number | null
+  tuition_fee_min: number | null
+  tuition_fee_max: number | null
+  intakes: string[] | null
+  application_deadline: string | null
+  program_levels: string[] | null
   requirements: {
     min_gpa?: number
     min_ielts?: number
@@ -167,6 +173,15 @@ export interface EligibilityResult {
   university: PartnerUniversity
   eligible: boolean
   reasons: string[]
+}
+
+export type RuleEligibilityStatus = 'Eligible' | 'Maybe Eligible' | 'Not Eligible'
+
+export interface RuleEligibilityResult {
+  status: RuleEligibilityStatus
+  reasons: string[]
+  warnings: string[]
+  blockers: string[]
 }
 
 export interface WebsitePhoto {

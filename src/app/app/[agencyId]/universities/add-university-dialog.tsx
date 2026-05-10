@@ -37,6 +37,14 @@ export function AddUniversityDialog({ agencyId }: { agencyId: string }) {
     const minGpa = formData.get('min_gpa') as string
     const minIelts = formData.get('min_ielts') as string
     const degreeLevels = formData.get('degree_levels') as string
+    const programLevels = (formData.get('program_levels') as string)
+      ?.split(',')
+      .map((value) => value.trim())
+      .filter(Boolean)
+    const intakes = (formData.get('intakes') as string)
+      ?.split(',')
+      .map((value) => value.trim())
+      .filter(Boolean)
 
     if (minGpa) requirements.min_gpa = parseFloat(minGpa)
     if (minIelts) requirements.min_ielts = parseFloat(minIelts)
@@ -46,6 +54,12 @@ export function AddUniversityDialog({ agencyId }: { agencyId: string }) {
       agency_id: agency?.id,
       name: formData.get('name') as string,
       country: formData.get('country') as string,
+      ranking: formData.get('ranking') ? Number(formData.get('ranking')) : null,
+      tuition_fee_min: formData.get('tuition_fee_min') ? Number(formData.get('tuition_fee_min')) : null,
+      tuition_fee_max: formData.get('tuition_fee_max') ? Number(formData.get('tuition_fee_max')) : null,
+      intakes,
+      application_deadline: (formData.get('application_deadline') as string) || null,
+      program_levels: programLevels,
       requirements,
       commission_rate: parseFloat((formData.get('commission_rate') as string) || '10'),
     })
@@ -77,6 +91,24 @@ export function AddUniversityDialog({ agencyId }: { agencyId: string }) {
             <Input name="country" label="Country" placeholder="Canada" />
             <Input name="commission_rate" type="number" label="Commission %" placeholder="10" step="0.5" min="0" max="50" />
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Input name="ranking" type="number" label="Ranking" placeholder="120" min="1" />
+            <Input name="application_deadline" type="date" label="Deadline" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Input name="tuition_fee_min" type="number" label="Min Tuition" placeholder="15000" min="0" />
+            <Input name="tuition_fee_max" type="number" label="Max Tuition" placeholder="30000" min="0" />
+          </div>
+          <Input
+            name="intakes"
+            label="Intakes (comma-separated)"
+            placeholder="February, July, September"
+          />
+          <Input
+            name="program_levels"
+            label="Program Levels (comma-separated)"
+            placeholder="Bachelor, Master, PhD"
+          />
           <div className="border-t border-[#1E1E1E] pt-3">
             <p className="text-xs text-[#606060] mb-2">Requirements</p>
             <div className="grid grid-cols-2 gap-3">
