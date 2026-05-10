@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { SidebarMascots } from '@/components/sidebar-mascots'
 import type { Agency, User } from '@/lib/types'
 import { signOut } from '@/app/actions/auth'
 
@@ -112,7 +113,8 @@ export function Sidebar({ agency, user }: SidebarProps) {
       </nav>
 
       {/* User */}
-      <div className="border-t border-[#1E1E1E] p-3">
+      <div className="relative border-t border-[#1E1E1E] p-3">
+        <SidebarMascots />
         <div className="flex items-center gap-2.5">
           <Avatar className="h-7 w-7">
             <AvatarFallback>{getInitials(user.full_name || user.email)}</AvatarFallback>
