@@ -28,7 +28,7 @@ interface UniversitiesSearchProps {
   agencyId: string
   universities: PartnerUniversity[]
   students: StudentProfile[]
-  addUniversity: React.ReactNode
+  actions: React.ReactNode
 }
 
 const STATUS_COLORS: Record<RuleEligibilityStatus, string> = {
@@ -38,9 +38,9 @@ const STATUS_COLORS: Record<RuleEligibilityStatus, string> = {
 }
 
 export function UniversitiesSearch({
+  actions,
   universities,
   students,
-  addUniversity,
 }: UniversitiesSearchProps) {
   const [query, setQuery] = React.useState('')
   const [country, setCountry] = React.useState('all')
@@ -92,7 +92,7 @@ export function UniversitiesSearch({
             {filtered.length} of {universities.length} universities visible
           </p>
         </div>
-        {addUniversity}
+        <div className="flex flex-wrap gap-2">{actions}</div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-4">

@@ -286,6 +286,10 @@ insert into storage.buckets (id, name, public)
 values ('student-tracking-files', 'student-tracking-files', false)
 on conflict (id) do update set public = false;
 
+insert into storage.buckets (id, name, public)
+values ('logos', 'logos', true)
+on conflict (id) do update set public = true;
+
 -- Storage Policies: Website Assets
 drop policy if exists "Agency members upload website assets" on storage.objects;
 drop policy if exists "Agency members update website assets" on storage.objects;
@@ -310,6 +314,26 @@ create policy "Agency members delete website assets" on storage.objects
     and (storage.foldername(name))[1] in (
       select agencies.subdomain from agencies where agencies.id = get_user_agency_id()
     )
+  );
+
+-- Storage Policies: Agency Logos
+drop policy if exists "Agency members upload agency logos" on storage.objects;
+drop policy if exists "Agency members update agency logos" on storage.objects;
+drop policy if exists "Agency members delete agency logos" on storage.objects;
+create policy "Agency members upload agency logos" on storage.objects
+  for insert with check (
+    bucket_id = 'logos'
+    and (storage.foldername(name))[2] = get_user_agency_id()::text
+  );
+create policy "Agency members update agency logos" on storage.objects
+  for update using (
+    bucket_id = 'logos'
+    and (storage.foldername(name))[2] = get_user_agency_id()::text
+  );
+create policy "Agency members delete agency logos" on storage.objects
+  for delete using (
+    bucket_id = 'logos'
+    and (storage.foldername(name))[2] = get_user_agency_id()::text
   );
 
 -- Storage Policies: Documents

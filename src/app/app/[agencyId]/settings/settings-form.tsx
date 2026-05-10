@@ -1,11 +1,11 @@
 'use client'
 
 import * as React from 'react'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
+import { AgencyLogoUploader } from '@/components/agency-logo-uploader'
 import type { Agency } from '@/lib/types'
 
 export function SettingsForm({ agency }: { agency: Agency }) {
@@ -13,7 +13,6 @@ export function SettingsForm({ agency }: { agency: Agency }) {
   const [success, setSuccess] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [primaryColor, setPrimaryColor] = React.useState(agency.primary_color)
-  const [logoFile, setLogoFile] = React.useState<File | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -24,14 +23,6 @@ export function SettingsForm({ agency }: { agency: Agency }) {
     setSuccess(false)
 
     const formData = new FormData(e.currentTarget)
-    let logoUrl = agency.logo_url
-
-    if (logoFile) {
-      const path = `logos/${agency.id}/${Date.now()}-${logoFile.name}`
-      const { error: uploadError } = await supabase.storage.from('logos').upload(path, logoFile)
-      if (uploadError) { setError(uploadError.message); setLoading(false); return }
-      logoUrl = supabase.storage.from('logos').getPublicUrl(path).data.publicUrl
-    }
 
     const { error: updateError } = await supabase
       .from('agencies')
@@ -39,7 +30,6 @@ export function SettingsForm({ agency }: { agency: Agency }) {
         name: formData.get('name') as string,
         website: formData.get('website') as string,
         primary_color: formData.get('primary_color') as string,
-        logo_url: logoUrl,
       })
       .eq('id', agency.id)
 
@@ -65,27 +55,7 @@ export function SettingsForm({ agency }: { agency: Agency }) {
         placeholder="https://example.com"
       />
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium text-[#A0A0A0]">Logo</label>
-        <div className="flex items-center gap-3">
-          {agency.logo_url && (
-            <Image
-              src={agency.logo_url}
-              alt={`${agency.name} logo`}
-              width={40}
-              height={40}
-              unoptimized
-              className="h-10 w-10 rounded-[6px] object-cover border border-[#2A2A2A]"
-            />
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            className="text-xs text-[#A0A0A0] file:mr-3 file:rounded-[6px] file:border-0 file:bg-[#1A1A1A] file:px-3 file:py-1.5 file:text-xs file:text-[#F5F5F5] file:cursor-pointer hover:file:bg-[#2A2A2A]"
-            onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)}
-          />
-        </div>
-      </div>
+      <AgencyLogoUploader agency={agency} />
 
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-medium text-[#A0A0A0]">Brand Color</label>

@@ -1,9 +1,13 @@
 import { getDashboardStats } from '@/app/actions/pipeline'
+import { clearApplicationPipeline } from '@/app/actions/admin-controls'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDate, stageColor } from '@/lib/utils'
-import { Users, Layers, DollarSign, CheckSquare, TrendingUp, Clock, Globe } from 'lucide-react'
+import { AgencyLogoUploader } from '@/components/agency-logo-uploader'
+import { DangerCleanupButton } from '@/components/danger-cleanup-button'
+import { getCleanupSummary } from '@/lib/admin-controls'
+import { Users, Layers, DollarSign, CheckSquare, TrendingUp, Clock, Globe, ImageUp } from 'lucide-react'
 
 export default async function DashboardPage({
   params,
@@ -122,6 +126,43 @@ export default async function DashboardPage({
                 ))}
               </ul>
             )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {stats.agency && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Agency Logo</CardTitle>
+                <ImageUp className="h-4 w-4 text-[#606060]" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <AgencyLogoUploader agency={stats.agency} compact />
+            </CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Demo Data Cleanup</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-[#A0A0A0]">
+              Remove pipeline demo applications from this agency. Student profiles and universities stay unchanged.
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <DangerCleanupButton
+                action={clearApplicationPipeline.bind(null, agencyId)}
+                buttonLabel="Clear Pipeline"
+                title="Clear pipeline data?"
+                description={getCleanupSummary({ pipelineCount: stats.totalApplications })}
+                confirmLabel="Clear Pipeline"
+                onSuccessMessage={(result) => `Removed ${result.deletedCount ?? 0} pipeline applications`}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>

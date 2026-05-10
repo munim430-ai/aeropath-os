@@ -1,4 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
+import { clearAgencyUniversities } from '@/app/actions/admin-controls'
+import { DangerCleanupButton } from '@/components/danger-cleanup-button'
+import { getCleanupSummary } from '@/lib/admin-controls'
 import { UniversitiesSearch } from './universities-search'
 import { AddUniversityDialog } from './add-university-dialog'
 import type { PartnerUniversity, StudentProfile } from '@/lib/types'
@@ -29,13 +32,29 @@ export default async function UniversitiesPage({
       .eq('agency_id', agency?.id)
       .order('created_at', { ascending: false }),
   ])
+  const universities = (universitiesResult.data ?? []) as PartnerUniversity[]
+  const agencyUniversityCount = universities.filter((university) => university.agency_id === agency?.id).length
 
   return (
     <UniversitiesSearch
       agencyId={agencyId}
-      universities={(universitiesResult.data ?? []) as PartnerUniversity[]}
+      universities={universities}
       students={(studentsResult.data ?? []) as StudentProfile[]}
-      addUniversity={<AddUniversityDialog agencyId={agencyId} />}
+      actions={
+        <>
+          <AddUniversityDialog agencyId={agencyId} />
+          <DangerCleanupButton
+            action={clearAgencyUniversities.bind(null, agencyId)}
+            buttonLabel="Clear Universities"
+            title="Clear agency universities?"
+            description={`${getCleanupSummary({ universityCount: agencyUniversityCount })} Related pipeline applications for those universities will also be removed.`}
+            confirmLabel="Clear Universities"
+            onSuccessMessage={(result) =>
+              `Removed ${result.deletedCount ?? 0} universities and ${result.deletedPipelineCount ?? 0} related applications`
+            }
+          />
+        </>
+      }
     />
   )
 }
