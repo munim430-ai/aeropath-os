@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { canAccessRoute, canManageTeam, canUseDangerousAdminControls, getAccessibleRoutes, normalizeRole } from './rbac'
+import { canAccessAppPath, canAccessRoute, canManageTeam, canUseDangerousAdminControls, getAccessibleRoutes, normalizeRole } from './rbac'
 
 describe('rbac helpers', () => {
   it('gives owners access to sensitive modules', () => {
@@ -24,5 +24,16 @@ describe('rbac helpers', () => {
     assert.equal(normalizeRole('BadRole'), 'Consultant')
     assert.equal(canAccessRoute('BadRole', 'tasks'), true)
     assert.equal(canAccessRoute('BadRole', 'team'), false)
+  })
+
+  it('blocks disabled users from all app routes', () => {
+    assert.equal(canAccessAppPath('Owner', 'Disabled', '/app/demo/team', 'demo'), false)
+    assert.equal(canAccessAppPath('Counselor', 'Disabled', '/app/demo/students', 'demo'), false)
+  })
+
+  it('checks direct app URLs by route segment', () => {
+    assert.equal(canAccessAppPath('Receptionist', 'Active', '/app/demo/students/abc', 'demo'), true)
+    assert.equal(canAccessAppPath('Receptionist', 'Active', '/app/demo/financials', 'demo'), false)
+    assert.equal(canAccessAppPath('Owner', 'Active', '/app/demo/settings', 'demo'), true)
   })
 })

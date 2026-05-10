@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient, getAgencyUUID } from '@/lib/supabase/server'
+import { writeAuditLog } from '@/lib/audit-log'
 import { canManageTeam, staffRoles } from '@/lib/rbac'
 import type { UserRole } from '@/lib/types'
 
@@ -92,7 +93,7 @@ export async function inviteStaff(agencyId: string, formData: FormData) {
   }, { onConflict: 'email' })
   if (userError) return { error: userError.message }
 
-  const { error: inviteError } = await admin.from('staff_invites').upsert({
+  const { data: inviteRow, error: inviteError } = await admin.from('staff_invites').upsert({
     agency_id: current.agencyUuid,
     email,
     full_name: fullName,
@@ -100,8 +101,17 @@ export async function inviteStaff(agencyId: string, formData: FormData) {
     status: 'Pending',
     invited_by_id: current.userId,
     auth_user_id: invite.data.user.id,
-  }, { onConflict: 'agency_id,email' })
+  }, { onConflict: 'agency_id,email' }).select('id').single()
   if (inviteError) return { error: inviteError.message }
+
+  await writeAuditLog(admin, {
+    agencyId: current.agencyUuid,
+    actorUserId: current.userId,
+    action: 'staff.invited',
+    entityType: 'staff_invite',
+    entityId: inviteRow?.id ?? null,
+    metadata: { email, role },
+  })
 
   revalidatePath(`/app/${agencyId}/team`)
   revalidatePath(`/app/${agencyId}/hrm`)
@@ -123,6 +133,94 @@ export async function updateStaffAccess(agencyId: string, userId: string, formDa
     .eq('agency_id', current.agencyUuid)
 
   if (error) return { error: error.message }
+  await writeAuditLog(admin, {
+    agencyId: current.agencyUuid,
+    actorUserId: current.userId,
+    action: 'staff.access_updated',
+    entityType: 'user',
+    entityId: userId,
+    metadata: { role, status },
+  })
+  revalidatePath(`/app/${agencyId}/team`)
+  revalidatePath(`/app/${agencyId}/hrm`)
+  return { success: true }
+}
+
+export async function resendStaffInvite(agencyId: string, inviteId: string) {
+  const current = await getCurrentTeamManager(agencyId)
+  if ('error' in current) return current
+
+  const admin = await createAdminClient()
+  const { data: invite, error: inviteReadError } = await admin
+    .from('staff_invites')
+    .select('id, email, role, status')
+    .eq('id', inviteId)
+    .eq('agency_id', current.agencyUuid)
+    .single()
+
+  if (inviteReadError || !invite) return { error: inviteReadError?.message ?? 'Invite not found' }
+  if (invite.status === 'Revoked') return { error: 'Revoked invites cannot be resent' }
+
+  const resend = await admin.auth.admin.inviteUserByEmail(invite.email)
+  if (resend.error) return { error: resend.error.message }
+
+  const { error } = await admin
+    .from('staff_invites')
+    .update({ status: 'Pending', created_at: new Date().toISOString(), auth_user_id: resend.data.user?.id ?? null })
+    .eq('id', inviteId)
+    .eq('agency_id', current.agencyUuid)
+
+  if (error) return { error: error.message }
+  await writeAuditLog(admin, {
+    agencyId: current.agencyUuid,
+    actorUserId: current.userId,
+    action: 'staff.invite_resent',
+    entityType: 'staff_invite',
+    entityId: inviteId,
+    metadata: { email: invite.email, role: invite.role },
+  })
+
+  revalidatePath(`/app/${agencyId}/team`)
+  return { success: true }
+}
+
+export async function revokeStaffInvite(agencyId: string, inviteId: string) {
+  const current = await getCurrentTeamManager(agencyId)
+  if ('error' in current) return current
+
+  const admin = await createAdminClient()
+  const { data: invite, error: inviteReadError } = await admin
+    .from('staff_invites')
+    .select('id, email, auth_user_id')
+    .eq('id', inviteId)
+    .eq('agency_id', current.agencyUuid)
+    .single()
+
+  if (inviteReadError || !invite) return { error: inviteReadError?.message ?? 'Invite not found' }
+
+  const { error } = await admin
+    .from('staff_invites')
+    .update({ status: 'Revoked' })
+    .eq('id', inviteId)
+    .eq('agency_id', current.agencyUuid)
+
+  if (error) return { error: error.message }
+
+  await admin
+    .from('users')
+    .update({ status: 'Disabled' })
+    .eq('agency_id', current.agencyUuid)
+    .eq('email', invite.email)
+
+  await writeAuditLog(admin, {
+    agencyId: current.agencyUuid,
+    actorUserId: current.userId,
+    action: 'staff.invite_revoked',
+    entityType: 'staff_invite',
+    entityId: inviteId,
+    metadata: { email: invite.email, auth_user_id: invite.auth_user_id },
+  })
+
   revalidatePath(`/app/${agencyId}/team`)
   revalidatePath(`/app/${agencyId}/hrm`)
   return { success: true }

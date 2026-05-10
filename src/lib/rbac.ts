@@ -13,7 +13,22 @@ export type AppRouteKey =
   | 'team'
   | 'settings'
 
+export type StaffAccessStatus = 'Active' | 'Invited' | 'Disabled'
+
 export const staffRoles = ['Owner', 'Manager', 'Counselor', 'Receptionist', 'Consultant'] as const
+
+const routeSegments: Array<[string, AppRouteKey]> = [
+  ['/crm', 'crm'],
+  ['/students', 'students'],
+  ['/pipeline', 'pipeline'],
+  ['/universities', 'universities'],
+  ['/website-content', 'website-content'],
+  ['/tasks', 'tasks'],
+  ['/financials', 'financials'],
+  ['/hrm', 'hrm'],
+  ['/team', 'team'],
+  ['/settings', 'settings'],
+]
 
 const permissions: Record<UserRole, AppRouteKey[]> = {
   SuperAdmin: ['dashboard', 'crm', 'students', 'pipeline', 'universities', 'website-content', 'tasks', 'financials', 'hrm', 'team', 'settings'],
@@ -27,6 +42,23 @@ const permissions: Record<UserRole, AppRouteKey[]> = {
 
 export function canAccessRoute(role: UserRole | string | null | undefined, route: AppRouteKey) {
   return permissions[normalizeRole(role)].includes(route)
+}
+
+export function routeKeyFromAppPath(pathname: string, agencyId: string): AppRouteKey {
+  const base = `/app/${agencyId}`
+  const path = pathname.startsWith(base) ? pathname.slice(base.length) || '/' : pathname
+  const matched = routeSegments.find(([segment]) => path === segment || path.startsWith(`${segment}/`))
+  return matched?.[1] ?? 'dashboard'
+}
+
+export function canAccessAppPath(
+  role: UserRole | string | null | undefined,
+  status: StaffAccessStatus | string | null | undefined,
+  pathname: string,
+  agencyId: string
+) {
+  if (status === 'Disabled') return false
+  return canAccessRoute(role, routeKeyFromAppPath(pathname, agencyId))
 }
 
 export function getAccessibleRoutes(role: UserRole | string | null | undefined) {

@@ -25,6 +25,7 @@ export default async function DashboardLayout({
     .single()
 
   if (!dbUser) redirect('/login')
+  if (dbUser.status === 'Disabled') redirect('/login')
 
   const agency = (dbUser as { agencies: Agency }).agencies
   if (!agency || agency.subdomain !== agencyId) redirect('/login')
@@ -40,7 +41,7 @@ export default async function DashboardLayout({
       <div className="flex flex-1 flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
-      <RouteAccessGuard agencyId={agency.subdomain} role={user.role} />
+      <RouteAccessGuard agencyId={agency.subdomain} role={user.role} status={user.status} />
       <CommandPalette agencyId={agency.subdomain} role={user.role} />
     </div>
   )

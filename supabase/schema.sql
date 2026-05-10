@@ -179,6 +179,18 @@ create table if not exists staff_invites (
   unique (agency_id, email)
 );
 
+-- 11e. Audit Logs
+create table if not exists audit_logs (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade not null,
+  actor_user_id   uuid references users(id) on delete set null,
+  action          text not null,
+  entity_type     text not null,
+  entity_id       uuid,
+  metadata        jsonb default '{}'::jsonb not null,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 -- 12. Website Content CMS
 create table if not exists website_content (
   id              uuid primary key default uuid_generate_v4(),
@@ -223,6 +235,7 @@ alter table bank_transactions enable row level security;
 alter table student_payments enable row level security;
 alter table hrm_attendance enable row level security;
 alter table staff_invites enable row level security;
+alter table audit_logs enable row level security;
 alter table website_content enable row level security;
 alter table student_tracking_uploads enable row level security;
 
@@ -327,6 +340,13 @@ create policy "Agency members read staff invites" on staff_invites
 create policy "Agency owners manage staff invites" on staff_invites
   for all using (agency_id = get_user_agency_id())
   with check (agency_id = get_user_agency_id());
+
+drop policy if exists "Agency members read audit logs" on audit_logs;
+drop policy if exists "Agency members insert audit logs" on audit_logs;
+create policy "Agency members read audit logs" on audit_logs
+  for select using (agency_id = get_user_agency_id());
+create policy "Agency members insert audit logs" on audit_logs
+  for insert with check (agency_id = get_user_agency_id());
 
 -- Policies for Website Content
 drop policy if exists "Agency members manage website content" on website_content;
@@ -682,3 +702,28 @@ create policy "Agency owners manage staff invites" on staff_invites
 
 create index if not exists users_agency_role_idx on users (agency_id, role);
 create index if not exists staff_invites_agency_status_idx on staff_invites (agency_id, status);
+
+-- 21. Audit Logging & RBAC Hardening
+-- Run this appended block only on existing databases.
+create table if not exists audit_logs (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade not null,
+  actor_user_id   uuid references users(id) on delete set null,
+  action          text not null,
+  entity_type     text not null,
+  entity_id       uuid,
+  metadata        jsonb default '{}'::jsonb not null,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table audit_logs enable row level security;
+
+drop policy if exists "Agency members read audit logs" on audit_logs;
+drop policy if exists "Agency members insert audit logs" on audit_logs;
+create policy "Agency members read audit logs" on audit_logs
+  for select using (agency_id = get_user_agency_id());
+create policy "Agency members insert audit logs" on audit_logs
+  for insert with check (agency_id = get_user_agency_id());
+
+create index if not exists audit_logs_agency_created_idx on audit_logs (agency_id, created_at desc);
+create index if not exists audit_logs_entity_idx on audit_logs (entity_type, entity_id);

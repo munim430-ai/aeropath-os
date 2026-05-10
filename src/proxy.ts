@@ -1,8 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { canAccessAppPath } from "@/lib/rbac";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+function withSessionCookies(response: NextResponse, sessionResponse: NextResponse) {
+  sessionResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie.name, cookie.value))
+  return response
+}
 
 export async function proxy(request: NextRequest) {
   // 1. Create an unmodified response for Supabase
@@ -34,9 +40,6 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  // Refresh session
-  await supabase.auth.getUser()
-
   // 3. Subdomain Proxy Logic
   const url = request.nextUrl.clone()
   const hostname = request.headers.get('host') || ''
@@ -50,14 +53,44 @@ export async function proxy(request: NextRequest) {
     hostWithoutPort !== 'www' &&
     hostWithoutPort.endsWith(`.${rootWithoutPort}`)
 
+  const appPath = isSubdomain
+    ? `/app/${hostWithoutPort.replace(`.${rootWithoutPort}`, '')}${url.pathname === '/' ? '' : url.pathname}`
+    : url.pathname
+
+  if (appPath.startsWith('/app/')) {
+    const [, , agencyId] = appPath.split('/')
+    const { data: auth } = await supabase.auth.getUser()
+
+    if (!auth.user) {
+      return withSessionCookies(NextResponse.redirect(new URL('/login', request.url)), supabaseResponse)
+    }
+
+    const { data: dbUser } = await supabase
+      .from('users')
+      .select('role, status, agencies(subdomain)')
+      .eq('auth_id', auth.user.id)
+      .single()
+
+    const agency = dbUser as { role?: string | null; status?: string | null; agencies?: { subdomain?: string | null } | null } | null
+    if (!agency || agency.agencies?.subdomain !== agencyId) {
+      return withSessionCookies(NextResponse.redirect(new URL('/login', request.url)), supabaseResponse)
+    }
+
+    if (agency.status === 'Disabled') {
+      return withSessionCookies(NextResponse.redirect(new URL('/login?disabled=1', request.url)), supabaseResponse)
+    }
+
+    if (!canAccessAppPath(agency.role, agency.status, appPath, agencyId)) {
+      return withSessionCookies(NextResponse.redirect(new URL(`/app/${agencyId}`, request.url)), supabaseResponse)
+    }
+  } else {
+    await supabase.auth.getUser()
+  }
+
   if (isSubdomain) {
     const subdomain = hostWithoutPort.replace(`.${rootWithoutPort}`, '')
     url.pathname = `/app/${subdomain}${url.pathname === '/' ? '' : url.pathname}`
-    // Merge the Supabase response headers into the rewrite
-    const rewriteResponse = NextResponse.rewrite(url)
-    // Copy cookies from supabaseResponse to the rewriteResponse
-    supabaseResponse.cookies.getAll().forEach(c => rewriteResponse.cookies.set(c.name, c.value))
-    return rewriteResponse
+    return withSessionCookies(NextResponse.rewrite(url), supabaseResponse)
   }
 
   return supabaseResponse

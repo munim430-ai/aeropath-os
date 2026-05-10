@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, getAgencyUUID } from '@/lib/supabase/server'
+import { getAuditActorUserId, writeAuditLog } from '@/lib/audit-log'
 import { buildFinanceDocumentNumber } from '@/lib/finance'
 
 type ActionResult = { success?: boolean; error?: string }
@@ -161,6 +162,13 @@ export async function deleteStudentPayment(agencyId: string, paymentId: string):
   const { error } = await supabase.from('student_payments').delete().eq('id', paymentId).eq('agency_id', agencyUuid)
 
   if (error) return { error: error.message }
+  await writeAuditLog(supabase, {
+    agencyId: agencyUuid,
+    actorUserId: await getAuditActorUserId(supabase, agencyUuid),
+    action: 'finance.payment_deleted',
+    entityType: 'student_payment',
+    entityId: paymentId,
+  })
   revalidateFinance(agencyId)
   return { success: true }
 }
@@ -249,6 +257,13 @@ export async function deleteCashEntry(agencyId: string, id: string): Promise<Act
   const { error } = await supabase.from('cash_ledger').delete().eq('id', id).eq('agency_id', agencyUuid)
 
   if (error) return { error: error.message }
+  await writeAuditLog(supabase, {
+    agencyId: agencyUuid,
+    actorUserId: await getAuditActorUserId(supabase, agencyUuid),
+    action: 'finance.cash_deleted',
+    entityType: 'cash_ledger',
+    entityId: id,
+  })
   revalidateFinance(agencyId)
   return { success: true }
 }
@@ -261,6 +276,13 @@ export async function deleteBankTransaction(agencyId: string, id: string): Promi
   const { error } = await supabase.from('bank_transactions').delete().eq('id', id).eq('agency_id', agencyUuid)
 
   if (error) return { error: error.message }
+  await writeAuditLog(supabase, {
+    agencyId: agencyUuid,
+    actorUserId: await getAuditActorUserId(supabase, agencyUuid),
+    action: 'finance.bank_deleted',
+    entityType: 'bank_transaction',
+    entityId: id,
+  })
   revalidateFinance(agencyId)
   return { success: true }
 }

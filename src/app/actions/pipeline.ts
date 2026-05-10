@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, getAgencyUUID } from '@/lib/supabase/server'
+import { getAuditActorUserId, writeAuditLog } from '@/lib/audit-log'
 import { getApplicationAttentionLevel, getChecklistTemplateForCountry, getDaysSince, getDaysUntil } from '@/lib/visa-operations'
 import type { ApplicationStage } from '@/lib/types'
 
@@ -83,6 +84,14 @@ export async function updateStage(
     .eq('agency_id', agencyUuid)
 
   if (error) return { error: error.message }
+  await writeAuditLog(supabase, {
+    agencyId: agencyUuid,
+    actorUserId: await getAuditActorUserId(supabase, agencyUuid),
+    action: 'pipeline.stage_updated',
+    entityType: 'application_pipeline',
+    entityId: applicationId,
+    metadata: { stage },
+  })
   revalidatePath(`/app/${agencyId}/pipeline`)
   return { success: true }
 }

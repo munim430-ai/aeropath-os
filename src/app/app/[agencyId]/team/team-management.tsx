@@ -2,8 +2,8 @@
 
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
-import { MailPlus, ShieldCheck } from 'lucide-react'
-import { inviteStaff, updateStaffAccess } from '@/app/actions/team'
+import { Ban, MailPlus, RefreshCw, ShieldCheck } from 'lucide-react'
+import { inviteStaff, resendStaffInvite, revokeStaffInvite, updateStaffAccess } from '@/app/actions/team'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -64,6 +64,17 @@ export function TeamManagement({
     setLoading(null)
   }
 
+  async function handleInviteAction(inviteId: string, action: 'resend' | 'revoke') {
+    setLoading(`${action}-${inviteId}`)
+    setError(null)
+    const result = action === 'resend'
+      ? await resendStaffInvite(agencyId, inviteId)
+      : await revokeStaffInvite(agencyId, inviteId)
+    if ('error' in result && result.error) setError(result.error)
+    else router.refresh()
+    setLoading(null)
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -116,7 +127,11 @@ export function TeamManagement({
                     {getInitials(user.full_name || user.email)}
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-[#F5F5F5]">{user.full_name || user.email}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="truncate text-sm font-medium text-[#F5F5F5]">{user.full_name || user.email}</p>
+                      {user.status === 'Disabled' && <Badge color="#ef4444">Disabled</Badge>}
+                      {user.status === 'Invited' && <Badge color="#f59e0b">Invited</Badge>}
+                    </div>
                     <p className="truncate text-xs text-[#606060]">{user.email}</p>
                     <p className="text-[10px] text-[#606060] mt-1">Joined {formatDate(user.created_at)}</p>
                   </div>
@@ -140,14 +155,36 @@ export function TeamManagement({
           <CardContent className="p-0">
             <div className="divide-y divide-[#1E1E1E]">
               {data.invites.slice(0, 8).map((invite) => (
-                <div key={invite.id} className="flex items-center justify-between gap-4 p-4">
+                <div key={invite.id} className="grid gap-3 p-4 lg:grid-cols-[1fr_auto_auto] lg:items-center">
                   <div>
                     <p className="text-sm font-medium text-[#F5F5F5]">{invite.full_name || invite.email}</p>
                     <p className="text-xs text-[#606060]">{invite.email} · {formatDate(invite.created_at)}</p>
                   </div>
                   <div className="flex gap-2">
                     <Badge color="#3b82f6">{invite.role}</Badge>
-                    <Badge color={invite.status === 'Pending' ? '#f59e0b' : '#10b981'}>{invite.status}</Badge>
+                    <Badge color={invite.status === 'Pending' ? '#f59e0b' : invite.status === 'Revoked' ? '#ef4444' : '#10b981'}>{invite.status}</Badge>
+                  </div>
+                  <div className="flex gap-2 lg:justify-end">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={invite.status === 'Revoked'}
+                      loading={loading === `resend-${invite.id}`}
+                      onClick={() => handleInviteAction(invite.id, 'resend')}
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      Resend
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="danger"
+                      disabled={invite.status === 'Revoked'}
+                      loading={loading === `revoke-${invite.id}`}
+                      onClick={() => handleInviteAction(invite.id, 'revoke')}
+                    >
+                      <Ban className="h-3.5 w-3.5" />
+                      Revoke
+                    </Button>
                   </div>
                 </div>
               ))}

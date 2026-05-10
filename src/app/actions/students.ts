@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient, getAgencyUUID } from '@/lib/supabase/server'
+import { getAuditActorUserId, writeAuditLog } from '@/lib/audit-log'
 
 export async function createStudent(agencyId: string, formData: FormData) {
   const agencyUuid = await getAgencyUUID(agencyId)
@@ -106,6 +107,14 @@ export async function deleteStudentProfile(agencyId: string, studentId: string) 
     .eq('agency_id', agencyUuid)
 
   if (error) return { error: error.message }
+
+  await writeAuditLog(supabase, {
+    agencyId: agencyUuid,
+    actorUserId: await getAuditActorUserId(supabase, agencyUuid),
+    action: 'student.deleted',
+    entityType: 'student_profile',
+    entityId: studentId,
+  })
 
   revalidatePath(`/app/${agencyId}`)
   revalidatePath(`/app/${agencyId}/students`)
