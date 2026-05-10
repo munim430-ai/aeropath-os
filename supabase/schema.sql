@@ -106,9 +106,13 @@ create table if not exists task_dispatcher (
 create table if not exists cash_ledger (
   id              uuid primary key default uuid_generate_v4(),
   agency_id       uuid references agencies(id) on delete cascade,
+  student_id      uuid references student_profiles(id) on delete set null,
   date            date default current_date,
   description     text,
   category        text,
+  payment_method  text check (payment_method in ('BKASH', 'BANK', 'CASH', 'Stripe', 'PayPal', 'Other')),
+  vendor_name     text,
+  reference_no    text,
   amount          numeric not null,
   type            text check (type in ('In', 'Out')) not null,
   created_at      timestamp with time zone default timezone('utc'::text, now()) not null
@@ -123,6 +127,24 @@ create table if not exists bank_transactions (
   type            text check (type in ('Deposit', 'Withdrawal')) not null,
   amount          numeric not null,
   created_at      timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 11b. Student Payments
+create table if not exists student_payments (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade not null,
+  student_id      uuid references student_profiles(id) on delete cascade not null,
+  pipeline_id     uuid references application_pipeline(id) on delete set null,
+  payment_date    date default current_date not null,
+  description     text,
+  purpose         text check (purpose in ('Service Charge', 'University Fee', 'Visa Fee', 'Other')) default 'Service Charge' not null,
+  method          text check (method in ('BKASH', 'BANK', 'CASH', 'Stripe', 'PayPal', 'Other')) default 'CASH' not null,
+  amount          numeric not null,
+  invoice_no      text,
+  receipt_no      text,
+  notes           text,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at      timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 -- 12. Website Content CMS
@@ -166,6 +188,7 @@ alter table financial_ledger enable row level security;
 alter table task_dispatcher enable row level security;
 alter table cash_ledger enable row level security;
 alter table bank_transactions enable row level security;
+alter table student_payments enable row level security;
 alter table website_content enable row level security;
 alter table student_tracking_uploads enable row level security;
 
@@ -256,6 +279,9 @@ create policy "Agency members manage cash ledger" on cash_ledger for all using (
 -- Policies for Bank Transactions
 drop policy if exists "Agency members manage bank transactions" on bank_transactions;
 create policy "Agency members manage bank transactions" on bank_transactions for all using (agency_id = get_user_agency_id());
+
+drop policy if exists "Agency members manage student payments" on student_payments;
+create policy "Agency members manage student payments" on student_payments for all using (agency_id = get_user_agency_id());
 
 -- Policies for Website Content
 drop policy if exists "Agency members manage website content" on website_content;
@@ -513,3 +539,39 @@ create policy "Agency members manage application checklist items" on application
 create index if not exists application_checklists_pipeline_idx on application_checklists (pipeline_id);
 create index if not exists application_checklist_items_pipeline_idx on application_checklist_items (pipeline_id);
 create index if not exists application_pipeline_deadline_idx on application_pipeline (deadline_date);
+
+-- 18. Finance & Accounting MVP
+-- Run this appended block only on existing databases.
+alter table cash_ledger add column if not exists student_id uuid references student_profiles(id) on delete set null;
+alter table cash_ledger add column if not exists payment_method text
+  check (payment_method in ('BKASH', 'BANK', 'CASH', 'Stripe', 'PayPal', 'Other'));
+alter table cash_ledger add column if not exists vendor_name text;
+alter table cash_ledger add column if not exists reference_no text;
+
+create table if not exists student_payments (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade not null,
+  student_id      uuid references student_profiles(id) on delete cascade not null,
+  pipeline_id     uuid references application_pipeline(id) on delete set null,
+  payment_date    date default current_date not null,
+  description     text,
+  purpose         text check (purpose in ('Service Charge', 'University Fee', 'Visa Fee', 'Other')) default 'Service Charge' not null,
+  method          text check (method in ('BKASH', 'BANK', 'CASH', 'Stripe', 'PayPal', 'Other')) default 'CASH' not null,
+  amount          numeric not null,
+  invoice_no      text,
+  receipt_no      text,
+  notes           text,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at      timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table student_payments enable row level security;
+
+drop policy if exists "Agency members manage student payments" on student_payments;
+create policy "Agency members manage student payments" on student_payments
+  for all using (agency_id = get_user_agency_id())
+  with check (agency_id = get_user_agency_id());
+
+create index if not exists student_payments_agency_idx on student_payments (agency_id);
+create index if not exists student_payments_student_idx on student_payments (student_id);
+create index if not exists cash_ledger_student_idx on cash_ledger (student_id);

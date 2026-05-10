@@ -16,7 +16,7 @@ export default async function FinancialsPage({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-[#F5F5F5]">Financial Management</h1>
-          <p className="text-sm text-[#606060] mt-0.5">Track your agency&apos;s cash flow, bank accounts, and commissions</p>
+          <p className="text-sm text-[#606060] mt-0.5">Track student payments, expenses, receipts, invoices, and file-level profit</p>
         </div>
       </div>
 
