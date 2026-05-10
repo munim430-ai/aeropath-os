@@ -25,7 +25,7 @@ export default async function PipelinePage({
           title="Clear pipeline data?"
           description={getCleanupSummary({ pipelineCount: applications.length })}
           confirmLabel="Clear Pipeline"
-          onSuccessMessage={(result) => `Removed ${result.deletedCount ?? 0} pipeline applications`}
+          successNoun="pipeline applications"
         />
       </div>
       <KanbanBoard applications={applications} agencyId={agencyId} />

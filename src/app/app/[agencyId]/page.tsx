@@ -160,7 +160,7 @@ export default async function DashboardPage({
                 title="Clear pipeline data?"
                 description={getCleanupSummary({ pipelineCount: stats.totalApplications })}
                 confirmLabel="Clear Pipeline"
-                onSuccessMessage={(result) => `Removed ${result.deletedCount ?? 0} pipeline applications`}
+                successNoun="pipeline applications"
               />
             </div>
           </CardContent>

@@ -19,7 +19,8 @@ interface DangerCleanupButtonProps {
   title: string
   description: string
   confirmLabel?: string
-  onSuccessMessage: (result: { deletedCount?: number; deletedPipelineCount?: number }) => string
+  successNoun: string
+  secondarySuccessNoun?: string
 }
 
 export function DangerCleanupButton({
@@ -27,7 +28,8 @@ export function DangerCleanupButton({
   buttonLabel,
   confirmLabel = 'Delete',
   description,
-  onSuccessMessage,
+  secondarySuccessNoun,
+  successNoun,
   title,
 }: DangerCleanupButtonProps) {
   const [open, setOpen] = React.useState(false)
@@ -45,7 +47,7 @@ export function DangerCleanupButton({
     if (result.error) {
       setError(result.error)
     } else {
-      setMessage(onSuccessMessage(result))
+      setMessage(formatSuccessMessage(result, successNoun, secondarySuccessNoun))
       setOpen(false)
       router.refresh()
     }
@@ -84,4 +86,14 @@ export function DangerCleanupButton({
       </DialogContent>
     </Dialog>
   )
+}
+
+function formatSuccessMessage(
+  result: { deletedCount?: number; deletedPipelineCount?: number },
+  successNoun: string,
+  secondarySuccessNoun?: string
+) {
+  const primary = `Removed ${result.deletedCount ?? 0} ${successNoun}`
+  if (!secondarySuccessNoun) return primary
+  return `${primary} and ${result.deletedPipelineCount ?? 0} ${secondarySuccessNoun}`
 }

@@ -49,9 +49,8 @@ export default async function UniversitiesPage({
             title="Clear agency universities?"
             description={`${getCleanupSummary({ universityCount: agencyUniversityCount })} Related pipeline applications for those universities will also be removed.`}
             confirmLabel="Clear Universities"
-            onSuccessMessage={(result) =>
-              `Removed ${result.deletedCount ?? 0} universities and ${result.deletedPipelineCount ?? 0} related applications`
-            }
+            successNoun="universities"
+            secondarySuccessNoun="related applications"
           />
         </>
       }
