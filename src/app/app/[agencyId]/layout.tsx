@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/sidebar'
 import { CommandPalette } from '@/components/command-palette'
+import { RouteAccessGuard } from '@/components/route-access-guard'
 import type { Agency, User } from '@/lib/types'
 
 export default async function DashboardLayout({
@@ -39,7 +40,8 @@ export default async function DashboardLayout({
       <div className="flex flex-1 flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
-      <CommandPalette agencyId={agency.subdomain} />
+      <RouteAccessGuard agencyId={agency.subdomain} role={user.role} />
+      <CommandPalette agencyId={agency.subdomain} role={user.role} />
     </div>
   )
 }

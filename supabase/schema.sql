@@ -22,7 +22,9 @@ create table if not exists users (
   auth_id         uuid not null unique references auth.users(id),
   email           text not null unique,
   full_name       text,
-  role            text check (role in ('SuperAdmin', 'Owner', 'Consultant', 'Student')) default 'Consultant',
+  role            text check (role in ('SuperAdmin', 'Owner', 'Manager', 'Counselor', 'Receptionist', 'Consultant', 'Student')) default 'Consultant',
+  status          text check (status in ('Active', 'Invited', 'Disabled')) default 'Active' not null,
+  invited_at      timestamp with time zone,
   created_at      timestamp with time zone default now() not null
 );
 
@@ -162,6 +164,21 @@ create table if not exists hrm_attendance (
   unique (agency_id, user_id, attendance_date)
 );
 
+-- 11d. Staff Invites
+create table if not exists staff_invites (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade not null,
+  email           text not null,
+  full_name       text,
+  role            text check (role in ('Owner', 'Manager', 'Counselor', 'Receptionist', 'Consultant')) default 'Consultant' not null,
+  status          text check (status in ('Pending', 'Accepted', 'Revoked')) default 'Pending' not null,
+  invited_by_id   uuid references users(id) on delete set null,
+  auth_user_id    uuid,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null,
+  accepted_at     timestamp with time zone,
+  unique (agency_id, email)
+);
+
 -- 12. Website Content CMS
 create table if not exists website_content (
   id              uuid primary key default uuid_generate_v4(),
@@ -205,6 +222,7 @@ alter table cash_ledger enable row level security;
 alter table bank_transactions enable row level security;
 alter table student_payments enable row level security;
 alter table hrm_attendance enable row level security;
+alter table staff_invites enable row level security;
 alter table website_content enable row level security;
 alter table student_tracking_uploads enable row level security;
 
@@ -301,6 +319,14 @@ create policy "Agency members manage student payments" on student_payments for a
 
 drop policy if exists "Agency members manage attendance" on hrm_attendance;
 create policy "Agency members manage attendance" on hrm_attendance for all using (agency_id = get_user_agency_id());
+
+drop policy if exists "Agency members read staff invites" on staff_invites;
+drop policy if exists "Agency owners manage staff invites" on staff_invites;
+create policy "Agency members read staff invites" on staff_invites
+  for select using (agency_id = get_user_agency_id());
+create policy "Agency owners manage staff invites" on staff_invites
+  for all using (agency_id = get_user_agency_id())
+  with check (agency_id = get_user_agency_id());
 
 -- Policies for Website Content
 drop policy if exists "Agency members manage website content" on website_content;
@@ -620,3 +646,39 @@ create policy "Agency members manage attendance" on hrm_attendance
 
 create index if not exists hrm_attendance_agency_date_idx on hrm_attendance (agency_id, attendance_date);
 create index if not exists hrm_attendance_user_date_idx on hrm_attendance (user_id, attendance_date);
+
+-- 20. RBAC & Team Management MVP
+-- Run this appended block only on existing databases.
+alter table users drop constraint if exists users_role_check;
+alter table users add constraint users_role_check
+  check (role in ('SuperAdmin', 'Owner', 'Manager', 'Counselor', 'Receptionist', 'Consultant', 'Student'));
+alter table users add column if not exists status text
+  check (status in ('Active', 'Invited', 'Disabled')) default 'Active' not null;
+alter table users add column if not exists invited_at timestamp with time zone;
+
+create table if not exists staff_invites (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade not null,
+  email           text not null,
+  full_name       text,
+  role            text check (role in ('Owner', 'Manager', 'Counselor', 'Receptionist', 'Consultant')) default 'Consultant' not null,
+  status          text check (status in ('Pending', 'Accepted', 'Revoked')) default 'Pending' not null,
+  invited_by_id   uuid references users(id) on delete set null,
+  auth_user_id    uuid,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null,
+  accepted_at     timestamp with time zone,
+  unique (agency_id, email)
+);
+
+alter table staff_invites enable row level security;
+
+drop policy if exists "Agency members read staff invites" on staff_invites;
+drop policy if exists "Agency owners manage staff invites" on staff_invites;
+create policy "Agency members read staff invites" on staff_invites
+  for select using (agency_id = get_user_agency_id());
+create policy "Agency owners manage staff invites" on staff_invites
+  for all using (agency_id = get_user_agency_id())
+  with check (agency_id = get_user_agency_id());
+
+create index if not exists users_agency_role_idx on users (agency_id, role);
+create index if not exists staff_invites_agency_status_idx on staff_invites (agency_id, status);

@@ -1,4 +1,4 @@
-export type UserRole = 'SuperAdmin' | 'Owner' | 'Consultant' | 'Student'
+export type UserRole = 'SuperAdmin' | 'Owner' | 'Manager' | 'Counselor' | 'Receptionist' | 'Consultant' | 'Student'
 
 export type ApplicationStage =
   | 'Lead'
@@ -38,6 +38,7 @@ export interface User {
   email: string
   auth_id: string
   full_name: string | null
+  status?: 'Active' | 'Invited' | 'Disabled'
   created_at: string
 }
 

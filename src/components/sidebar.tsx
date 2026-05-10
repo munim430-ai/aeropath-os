@@ -18,11 +18,13 @@ import {
   PanelsTopLeft,
   UserRoundSearch,
   BriefcaseBusiness,
+  ShieldCheck,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { SidebarMascots } from '@/components/sidebar-mascots'
 import type { Agency, User } from '@/lib/types'
+import { canAccessRoute, type AppRouteKey } from '@/lib/rbac'
 import { signOut } from '@/app/actions/auth'
 
 interface SidebarProps {
@@ -30,17 +32,18 @@ interface SidebarProps {
   user: User
 }
 
-const navItems = (agencyId: string) => [
-  { href: `/app/${agencyId}`, icon: LayoutDashboard, label: 'Dashboard' },
-  { href: `/app/${agencyId}/crm`, icon: UserRoundSearch, label: 'CRM' },
-  { href: `/app/${agencyId}/students`, icon: Users, label: 'Students' },
-  { href: `/app/${agencyId}/pipeline`, icon: Layers, label: 'Pipeline' },
-  { href: `/app/${agencyId}/universities`, icon: GraduationCap, label: 'Universities' },
-  { href: `/app/${agencyId}/website-content`, icon: PanelsTopLeft, label: 'Website Content' },
-  { href: `/app/${agencyId}/tasks`, icon: CheckSquare, label: 'Tasks' },
-  { href: `/app/${agencyId}/financials`, icon: DollarSign, label: 'Financials' },
-  { href: `/app/${agencyId}/hrm`, icon: BriefcaseBusiness, label: 'HRM' },
-  { href: `/app/${agencyId}/settings`, icon: Settings, label: 'Settings' },
+const navItems = (agencyId: string): Array<{ href: string; icon: React.ElementType; label: string; route: AppRouteKey }> => [
+  { href: `/app/${agencyId}`, icon: LayoutDashboard, label: 'Dashboard', route: 'dashboard' },
+  { href: `/app/${agencyId}/crm`, icon: UserRoundSearch, label: 'CRM', route: 'crm' },
+  { href: `/app/${agencyId}/students`, icon: Users, label: 'Students', route: 'students' },
+  { href: `/app/${agencyId}/pipeline`, icon: Layers, label: 'Pipeline', route: 'pipeline' },
+  { href: `/app/${agencyId}/universities`, icon: GraduationCap, label: 'Universities', route: 'universities' },
+  { href: `/app/${agencyId}/website-content`, icon: PanelsTopLeft, label: 'Website Content', route: 'website-content' },
+  { href: `/app/${agencyId}/tasks`, icon: CheckSquare, label: 'Tasks', route: 'tasks' },
+  { href: `/app/${agencyId}/financials`, icon: DollarSign, label: 'Financials', route: 'financials' },
+  { href: `/app/${agencyId}/hrm`, icon: BriefcaseBusiness, label: 'HRM', route: 'hrm' },
+  { href: `/app/${agencyId}/team`, icon: ShieldCheck, label: 'Team Access', route: 'team' },
+  { href: `/app/${agencyId}/settings`, icon: Settings, label: 'Settings', route: 'settings' },
 ]
 
 export function Sidebar({ agency, user }: SidebarProps) {
@@ -92,7 +95,7 @@ export function Sidebar({ agency, user }: SidebarProps) {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
-        {navItems(agency.subdomain).map(({ href, icon: Icon, label }) => {
+        {navItems(agency.subdomain).filter((item) => canAccessRoute(user.role, item.route)).map(({ href, icon: Icon, label }) => {
           const active = pathname === href || (href !== `/app/${agency.subdomain}` && pathname.startsWith(href))
           return (
             <Link

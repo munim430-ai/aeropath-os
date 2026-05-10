@@ -3,14 +3,17 @@
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import { Command } from 'cmdk'
-import { Search, User, Layers, CheckSquare, Settings, X, PanelsTopLeft } from 'lucide-react'
+import { Search, User, Layers, CheckSquare, Settings, X, PanelsTopLeft, DollarSign, ShieldCheck, BriefcaseBusiness } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { canAccessRoute, type AppRouteKey } from '@/lib/rbac'
+import type { UserRole } from '@/lib/types'
 
 interface CommandPaletteProps {
   agencyId: string
+  role: UserRole
 }
 
-export function CommandPalette({ agencyId }: CommandPaletteProps) {
+export function CommandPalette({ agencyId, role }: CommandPaletteProps) {
   const [open, setOpen] = React.useState(false)
   const [query, setQuery] = React.useState('')
   const [students, setStudents] = React.useState<{ id: string; full_name: string }[]>([])
@@ -92,12 +95,15 @@ export function CommandPalette({ agencyId }: CommandPaletteProps) {
             )}
             <Command.Group heading="Navigate" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-[#606060]">
               {[
-                { icon: Layers, label: 'Pipeline', path: `/app/${agencyId}/pipeline` },
-                { icon: User, label: 'Students', path: `/app/${agencyId}/students` },
-                { icon: PanelsTopLeft, label: 'Website Content', path: `/app/${agencyId}/website-content` },
-                { icon: CheckSquare, label: 'Tasks', path: `/app/${agencyId}/tasks` },
-                { icon: Settings, label: 'Settings', path: `/app/${agencyId}/settings` },
-              ].map(({ icon: Icon, label, path }) => (
+                { icon: Layers, label: 'Pipeline', path: `/app/${agencyId}/pipeline`, route: 'pipeline' },
+                { icon: User, label: 'Students', path: `/app/${agencyId}/students`, route: 'students' },
+                { icon: PanelsTopLeft, label: 'Website Content', path: `/app/${agencyId}/website-content`, route: 'website-content' },
+                { icon: CheckSquare, label: 'Tasks', path: `/app/${agencyId}/tasks`, route: 'tasks' },
+                { icon: DollarSign, label: 'Financials', path: `/app/${agencyId}/financials`, route: 'financials' },
+                { icon: BriefcaseBusiness, label: 'HRM', path: `/app/${agencyId}/hrm`, route: 'hrm' },
+                { icon: ShieldCheck, label: 'Team Access', path: `/app/${agencyId}/team`, route: 'team' },
+                { icon: Settings, label: 'Settings', path: `/app/${agencyId}/settings`, route: 'settings' },
+              ].filter((item) => canAccessRoute(role, item.route as AppRouteKey)).map(({ icon: Icon, label, path }) => (
                 <Command.Item
                   key={path}
                   value={label}
