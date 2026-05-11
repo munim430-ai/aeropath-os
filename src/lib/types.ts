@@ -13,6 +13,7 @@ export type DocumentType = 'Passport' | 'Transcript' | 'IELTS' | 'CV' | 'Other'
 
 export type FinancialStatus = 'Pending' | 'Received' | 'Cancelled'
 export type CommissionPayoutStatus = 'Pending' | 'Received' | 'Paid' | 'Cancelled'
+export type PayrollStatus = 'Draft' | 'Approved' | 'Paid'
 
 export type LeadSource =
   | 'Website'
@@ -257,6 +258,22 @@ export interface CommissionPayout {
   updated_at: string
   pipeline?: ApplicationPipeline | null
   sub_agent?: SubAgent | null
+}
+
+export interface PayrollRecord {
+  id: string
+  agency_id: string
+  user_id: string
+  payroll_month: string
+  base_salary: number
+  incentives: number
+  deductions: number
+  net_salary: number
+  status: PayrollStatus
+  notes: string | null
+  created_at: string
+  updated_at: string
+  user?: User | null
 }
 
 export interface TenantContext {

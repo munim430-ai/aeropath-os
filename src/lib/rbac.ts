@@ -13,6 +13,7 @@ export type AppRouteKey =
   | 'website-content'
   | 'tasks'
   | 'financials'
+  | 'payroll'
   | 'hrm'
   | 'team'
   | 'settings'
@@ -33,14 +34,15 @@ const routeSegments: Array<[string, AppRouteKey]> = [
   ['/website-content', 'website-content'],
   ['/tasks', 'tasks'],
   ['/financials', 'financials'],
+  ['/payroll', 'payroll'],
   ['/hrm', 'hrm'],
   ['/team', 'team'],
   ['/settings', 'settings'],
 ]
 
 const permissions: Record<UserRole, AppRouteKey[]> = {
-  SuperAdmin: ['dashboard', 'crm', 'students', 'pipeline', 'calendar', 'analytics', 'sub-agents', 'commissions', 'universities', 'website-content', 'tasks', 'financials', 'hrm', 'team', 'settings'],
-  Owner: ['dashboard', 'crm', 'students', 'pipeline', 'calendar', 'analytics', 'sub-agents', 'commissions', 'universities', 'website-content', 'tasks', 'financials', 'hrm', 'team', 'settings'],
+  SuperAdmin: ['dashboard', 'crm', 'students', 'pipeline', 'calendar', 'analytics', 'sub-agents', 'commissions', 'universities', 'website-content', 'tasks', 'financials', 'payroll', 'hrm', 'team', 'settings'],
+  Owner: ['dashboard', 'crm', 'students', 'pipeline', 'calendar', 'analytics', 'sub-agents', 'commissions', 'universities', 'website-content', 'tasks', 'financials', 'payroll', 'hrm', 'team', 'settings'],
   Manager: ['dashboard', 'crm', 'students', 'pipeline', 'calendar', 'analytics', 'sub-agents', 'commissions', 'universities', 'website-content', 'tasks', 'hrm'],
   Counselor: ['dashboard', 'crm', 'students', 'pipeline', 'calendar', 'universities', 'tasks', 'hrm'],
   Consultant: ['dashboard', 'crm', 'students', 'pipeline', 'calendar', 'universities', 'tasks', 'hrm'],

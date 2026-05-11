@@ -254,6 +254,23 @@ create table if not exists commission_payouts (
   updated_at          timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- 11i. Payroll Records
+create table if not exists payroll_records (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade not null,
+  user_id         uuid references users(id) on delete cascade not null,
+  payroll_month   date not null,
+  base_salary     numeric default 0 not null,
+  incentives      numeric default 0 not null,
+  deductions      numeric default 0 not null,
+  net_salary      numeric default 0 not null,
+  status          text check (status in ('Draft', 'Approved', 'Paid')) default 'Draft' not null,
+  notes           text,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at      timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique (agency_id, user_id, payroll_month)
+);
+
 -- 12. Website Content CMS
 create table if not exists website_content (
   id              uuid primary key default uuid_generate_v4(),
@@ -317,6 +334,7 @@ alter table student_visa_histories enable row level security;
 alter table sub_agents enable row level security;
 alter table audit_logs enable row level security;
 alter table commission_payouts enable row level security;
+alter table payroll_records enable row level security;
 alter table website_content enable row level security;
 alter table student_tracking_uploads enable row level security;
 
@@ -445,6 +463,11 @@ create policy "Agency members insert audit logs" on audit_logs
 
 drop policy if exists "Agency members manage commission payouts" on commission_payouts;
 create policy "Agency members manage commission payouts" on commission_payouts
+  for all using (agency_id = get_user_agency_id())
+  with check (agency_id = get_user_agency_id());
+
+drop policy if exists "Agency members manage payroll records" on payroll_records;
+create policy "Agency members manage payroll records" on payroll_records
   for all using (agency_id = get_user_agency_id())
   with check (agency_id = get_user_agency_id());
 
@@ -937,3 +960,30 @@ create policy "Agency members manage commission payouts" on commission_payouts
   with check (agency_id = get_user_agency_id());
 
 create index if not exists commission_payouts_agency_status_idx on commission_payouts (agency_id, status);
+
+-- 26. Payroll MVP
+-- Run this appended block only on existing databases.
+create table if not exists payroll_records (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade not null,
+  user_id         uuid references users(id) on delete cascade not null,
+  payroll_month   date not null,
+  base_salary     numeric default 0 not null,
+  incentives      numeric default 0 not null,
+  deductions      numeric default 0 not null,
+  net_salary      numeric default 0 not null,
+  status          text check (status in ('Draft', 'Approved', 'Paid')) default 'Draft' not null,
+  notes           text,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at      timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique (agency_id, user_id, payroll_month)
+);
+
+alter table payroll_records enable row level security;
+
+drop policy if exists "Agency members manage payroll records" on payroll_records;
+create policy "Agency members manage payroll records" on payroll_records
+  for all using (agency_id = get_user_agency_id())
+  with check (agency_id = get_user_agency_id());
+
+create index if not exists payroll_records_agency_month_idx on payroll_records (agency_id, payroll_month);

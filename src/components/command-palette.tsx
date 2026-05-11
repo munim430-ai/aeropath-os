@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import { Command } from 'cmdk'
-import { Search, User, Layers, CalendarDays, BarChart3, CheckSquare, Settings, X, PanelsTopLeft, DollarSign, ShieldCheck, BriefcaseBusiness, Building2, HandCoins } from 'lucide-react'
+import { Search, User, Layers, CalendarDays, BarChart3, CheckSquare, Settings, X, PanelsTopLeft, DollarSign, ShieldCheck, BriefcaseBusiness, Building2, HandCoins, Banknote } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { canAccessRoute, type AppRouteKey } from '@/lib/rbac'
 import type { UserRole } from '@/lib/types'
@@ -104,6 +104,7 @@ export function CommandPalette({ agencyId, role }: CommandPaletteProps) {
                 { icon: PanelsTopLeft, label: 'Website Content', path: `/app/${agencyId}/website-content`, route: 'website-content' },
                 { icon: CheckSquare, label: 'Tasks', path: `/app/${agencyId}/tasks`, route: 'tasks' },
                 { icon: DollarSign, label: 'Financials', path: `/app/${agencyId}/financials`, route: 'financials' },
+                { icon: Banknote, label: 'Payroll', path: `/app/${agencyId}/payroll`, route: 'payroll' },
                 { icon: BriefcaseBusiness, label: 'HRM', path: `/app/${agencyId}/hrm`, route: 'hrm' },
                 { icon: ShieldCheck, label: 'Team Access', path: `/app/${agencyId}/team`, route: 'team' },
                 { icon: Settings, label: 'Settings', path: `/app/${agencyId}/settings`, route: 'settings' },
