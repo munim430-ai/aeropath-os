@@ -12,6 +12,36 @@ export interface UniversityFilters {
   programLevel?: string
 }
 
+export type DeadlineCalendarEventType = 'University Deadline' | 'Application Deadline'
+
+export interface DeadlineCalendarUniversityInput {
+  id: string
+  name: string
+  country?: string | null
+  application_deadline?: string | null
+}
+
+export interface DeadlineCalendarApplicationInput {
+  id: string
+  student_name?: string | null
+  university_name?: string | null
+  country?: string | null
+  deadline_date?: string | null
+  stage?: string | null
+}
+
+export interface DeadlineCalendarEvent {
+  id: string
+  title: string
+  date: string
+  type: DeadlineCalendarEventType
+  country: string | null
+  stage: string | null
+  href: string
+  daysRemaining: number | null
+  status: 'No Deadline' | 'Closed' | 'Urgent' | 'Open'
+}
+
 export function getDeadlineStatus(deadline?: string | null, now = new Date()) {
   if (!deadline) return { status: 'No Deadline' as const, daysRemaining: null }
 
@@ -25,6 +55,55 @@ export function getDeadlineStatus(deadline?: string | null, now = new Date()) {
   if (daysRemaining < 0) return { status: 'Closed' as const, daysRemaining }
   if (daysRemaining <= 30) return { status: 'Urgent' as const, daysRemaining }
   return { status: 'Open' as const, daysRemaining }
+}
+
+export function buildDeadlineCalendarEvents({
+  universities,
+  applications,
+  agencyId,
+  now = new Date(),
+}: {
+  universities: DeadlineCalendarUniversityInput[]
+  applications: DeadlineCalendarApplicationInput[]
+  agencyId: string
+  now?: Date
+}): DeadlineCalendarEvent[] {
+  const universityEvents = universities
+    .filter((university) => Boolean(university.application_deadline))
+    .map((university) => {
+      const deadline = getDeadlineStatus(university.application_deadline, now)
+      return {
+        id: `university-${university.id}`,
+        title: university.name,
+        date: university.application_deadline as string,
+        type: 'University Deadline' as const,
+        country: university.country ?? null,
+        stage: null,
+        href: `/app/${agencyId}/universities`,
+        daysRemaining: deadline.daysRemaining,
+        status: deadline.status,
+      }
+    })
+
+  const applicationEvents = applications
+    .filter((application) => Boolean(application.deadline_date))
+    .map((application) => {
+      const deadline = getDeadlineStatus(application.deadline_date, now)
+      const title = [application.student_name, application.university_name].filter(Boolean).join(' / ')
+      return {
+        id: `application-${application.id}`,
+        title: title || 'Application deadline',
+        date: application.deadline_date as string,
+        type: 'Application Deadline' as const,
+        country: application.country ?? null,
+        stage: application.stage ?? null,
+        href: `/app/${agencyId}/pipeline/${application.id}`,
+        daysRemaining: deadline.daysRemaining,
+        status: deadline.status,
+      }
+    })
+
+  return [...universityEvents, ...applicationEvents]
 }
 
 function includesNormalized(values: string[] | null | undefined, value?: string | null) {

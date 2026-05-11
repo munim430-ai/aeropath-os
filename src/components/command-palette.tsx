@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import { Command } from 'cmdk'
-import { Search, User, Layers, CheckSquare, Settings, X, PanelsTopLeft, DollarSign, ShieldCheck, BriefcaseBusiness } from 'lucide-react'
+import { Search, User, Layers, CalendarDays, CheckSquare, Settings, X, PanelsTopLeft, DollarSign, ShieldCheck, BriefcaseBusiness } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { canAccessRoute, type AppRouteKey } from '@/lib/rbac'
 import type { UserRole } from '@/lib/types'
@@ -96,6 +96,7 @@ export function CommandPalette({ agencyId, role }: CommandPaletteProps) {
             <Command.Group heading="Navigate" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-[#606060]">
               {[
                 { icon: Layers, label: 'Pipeline', path: `/app/${agencyId}/pipeline`, route: 'pipeline' },
+                { icon: CalendarDays, label: 'Calendar', path: `/app/${agencyId}/calendar`, route: 'calendar' },
                 { icon: User, label: 'Students', path: `/app/${agencyId}/students`, route: 'students' },
                 { icon: PanelsTopLeft, label: 'Website Content', path: `/app/${agencyId}/website-content`, route: 'website-content' },
                 { icon: CheckSquare, label: 'Tasks', path: `/app/${agencyId}/tasks`, route: 'tasks' },

@@ -6,6 +6,7 @@ describe('rbac helpers', () => {
   it('gives owners access to sensitive modules', () => {
     assert.equal(canAccessRoute('Owner', 'financials'), true)
     assert.equal(canAccessRoute('Owner', 'settings'), true)
+    assert.equal(canAccessRoute('Owner', 'calendar'), true)
     assert.equal(canManageTeam('Owner'), true)
   })
 
@@ -34,6 +35,7 @@ describe('rbac helpers', () => {
   it('checks direct app URLs by route segment', () => {
     assert.equal(canAccessAppPath('Receptionist', 'Active', '/app/demo/students/abc', 'demo'), true)
     assert.equal(canAccessAppPath('Receptionist', 'Active', '/app/demo/financials', 'demo'), false)
+    assert.equal(canAccessAppPath('Counselor', 'Active', '/app/demo/calendar', 'demo'), true)
     assert.equal(canAccessAppPath('Owner', 'Active', '/app/demo/settings', 'demo'), true)
   })
 })

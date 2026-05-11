@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  buildDeadlineCalendarEvents,
   evaluateUniversityEligibility,
   filterUniversities,
   getDeadlineStatus,
@@ -107,4 +108,32 @@ test('filterUniversities applies country, tuition, ranking, intake, and program 
   })
 
   assert.deepEqual(filtered.map((university) => university.id), ['uni-1'])
+})
+
+test('buildDeadlineCalendarEvents combines university and application deadlines', () => {
+  const events = buildDeadlineCalendarEvents({
+    universities: [
+      {
+        id: 'u1',
+        name: 'Uni A',
+        country: 'Canada',
+        application_deadline: '2026-08-01',
+      },
+    ],
+    applications: [
+      {
+        id: 'a1',
+        student_name: 'Student A',
+        university_name: 'Uni A',
+        deadline_date: '2026-07-15',
+        stage: 'Applied',
+      },
+    ],
+    agencyId: 'demo',
+  })
+
+  assert.deepEqual(events.map((event) => event.type), ['University Deadline', 'Application Deadline'])
+  assert.deepEqual(events.map((event) => event.date), ['2026-08-01', '2026-07-15'])
+  assert.equal(events[0].href, '/app/demo/universities')
+  assert.equal(events[1].href, '/app/demo/pipeline/a1')
 })
