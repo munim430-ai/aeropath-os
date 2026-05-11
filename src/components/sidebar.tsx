@@ -100,7 +100,7 @@ export function Sidebar({ agency, user }: SidebarProps) {
       <button className="flex items-center gap-2 mx-3 mt-3 px-2.5 py-2 rounded-[var(--radius-md)] border border-[#2A2A2A] bg-[#111111] text-[#606060] text-xs hover:border-[#3A3A3A] transition-colors group">
         <Search className="h-3.5 w-3.5" />
         <span className="flex-1 text-left">Search...</span>
-        <kbd className="font-mono text-[10px] bg-[#1A1A1A] px-1 py-0.5 rounded border border-[#2A2A2A] group-hover:border-[#3A3A3A]">⌘K</kbd>
+        <kbd className="font-mono text-[10px] bg-[#1A1A1A] px-1 py-0.5 rounded border border-[#2A2A2A] group-hover:border-[#3A3A3A]">Ctrl K</kbd>
       </button>
 
       {/* Nav */}

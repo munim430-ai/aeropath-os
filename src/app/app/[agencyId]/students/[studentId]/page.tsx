@@ -125,7 +125,7 @@ export default async function StudentProfilePage({
                 ].map(({ label, value }) => (
                   <div key={label}>
                     <dt className="text-xs text-[#606060]">{label}</dt>
-                    <dd className="text-sm text-[#F5F5F5] mt-0.5">{value || '—'}</dd>
+                    <dd className="text-sm text-[#F5F5F5] mt-0.5">{value || '-'}</dd>
                   </div>
                 ))}
               </dl>

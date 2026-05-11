@@ -125,8 +125,8 @@ export function CommandPalette({ agencyId, role }: CommandPaletteProps) {
             </Command.Empty>
           </Command.List>
           <div className="border-t border-[#1E1E1E] px-4 py-2 flex gap-4">
-            <span className="text-xs text-[#606060]"><kbd className="font-mono bg-[#1A1A1A] px-1 py-0.5 rounded text-[10px] border border-[#2A2A2A]">↑↓</kbd> navigate</span>
-            <span className="text-xs text-[#606060]"><kbd className="font-mono bg-[#1A1A1A] px-1 py-0.5 rounded text-[10px] border border-[#2A2A2A]">↵</kbd> select</span>
+            <span className="text-xs text-[#606060]"><kbd className="font-mono bg-[#1A1A1A] px-1 py-0.5 rounded text-[10px] border border-[#2A2A2A]">up/down</kbd> navigate</span>
+            <span className="text-xs text-[#606060]"><kbd className="font-mono bg-[#1A1A1A] px-1 py-0.5 rounded text-[10px] border border-[#2A2A2A]">enter</kbd> select</span>
             <span className="text-xs text-[#606060]"><kbd className="font-mono bg-[#1A1A1A] px-1 py-0.5 rounded text-[10px] border border-[#2A2A2A]">esc</kbd> close</span>
           </div>
         </Command>

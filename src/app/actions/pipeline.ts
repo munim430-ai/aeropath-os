@@ -126,6 +126,21 @@ export async function getDashboardStats(agencyId: string) {
     pendingRevenue: 0,
     intakeCounts: {},
     countryCounts: {},
+    activeSubAgents: 0,
+    assignedSubAgentStudents: 0,
+    commissionPayouts: {
+      pending: 0,
+      received: 0,
+      paid: 0,
+      pendingAmount: 0,
+      payableAmount: 0,
+    },
+    payroll: {
+      draft: 0,
+      approved: 0,
+      paid: 0,
+      monthlyNet: 0,
+    },
     operationalAlerts: {
       urgentDeadlines: 0,
       missingChecklistItems: 0,
@@ -135,11 +150,15 @@ export async function getDashboardStats(agencyId: string) {
   }
   const supabase = await createClient()
 
-  const [students, pipeline, tasks, ledger] = await Promise.all([
+  const [students, pipeline, tasks, ledger, subAgents, subAgentStudents, commissionPayouts, payrollRecords] = await Promise.all([
     supabase.from('student_profiles').select('id', { count: 'exact', head: true }).eq('agency_id', agencyUuid),
     supabase.from('application_pipeline').select('*').eq('agency_id', agencyUuid),
     supabase.from('task_dispatcher').select('id, status, title, due_date, assigned_to_id').eq('agency_id', agencyUuid).eq('status', 'Pending').order('due_date', { ascending: true }).limit(5),
     supabase.from('financial_ledger').select('expected_commission, status').eq('agency_id', agencyUuid),
+    supabase.from('sub_agents').select('id', { count: 'exact', head: true }).eq('agency_id', agencyUuid).eq('status', 'Active'),
+    supabase.from('student_profiles').select('id', { count: 'exact', head: true }).eq('agency_id', agencyUuid).not('sub_agent_id', 'is', null),
+    supabase.from('commission_payouts').select('status, university_amount, sub_agent_amount').eq('agency_id', agencyUuid),
+    supabase.from('payroll_records').select('status, net_salary').eq('agency_id', agencyUuid),
   ])
 
   const { data: checklistItems } = await supabase
@@ -170,6 +189,41 @@ export async function getDashboardStats(agencyId: string) {
   const pendingRevenue = (ledger.data ?? [])
     .filter((l) => l.status === 'Pending')
     .reduce((sum, l) => sum + (l.expected_commission ?? 0), 0)
+
+  const commissionRows = commissionPayouts.data ?? []
+  const commissionSummary = commissionRows.reduce(
+    (acc, payout) => {
+      if (payout.status === 'Pending') acc.pending += 1
+      if (payout.status === 'Received') acc.received += 1
+      if (payout.status === 'Paid') acc.paid += 1
+      if (payout.status === 'Pending') acc.pendingAmount += payout.university_amount ?? 0
+      if (payout.status === 'Received') acc.payableAmount += payout.sub_agent_amount ?? 0
+      return acc
+    },
+    {
+      pending: 0,
+      received: 0,
+      paid: 0,
+      pendingAmount: 0,
+      payableAmount: 0,
+    }
+  )
+
+  const payrollSummary = (payrollRecords.data ?? []).reduce(
+    (acc, record) => {
+      if (record.status === 'Draft') acc.draft += 1
+      if (record.status === 'Approved') acc.approved += 1
+      if (record.status === 'Paid') acc.paid += 1
+      acc.monthlyNet += record.net_salary ?? 0
+      return acc
+    },
+    {
+      draft: 0,
+      approved: 0,
+      paid: 0,
+      monthlyNet: 0,
+    }
+  )
 
   const { data: agency } = await supabase.from('agencies').select('*').eq('id', agencyUuid).single()
 
@@ -216,6 +270,10 @@ export async function getDashboardStats(agencyId: string) {
     pendingTasks: tasks.data ?? [],
     totalRevenue,
     pendingRevenue,
+    activeSubAgents: subAgents.count ?? 0,
+    assignedSubAgentStudents: subAgentStudents.count ?? 0,
+    commissionPayouts: commissionSummary,
+    payroll: payrollSummary,
     operationalAlerts,
   }
 }
