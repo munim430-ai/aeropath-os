@@ -7,12 +7,14 @@ describe('rbac helpers', () => {
     assert.equal(canAccessRoute('Owner', 'financials'), true)
     assert.equal(canAccessRoute('Owner', 'settings'), true)
     assert.equal(canAccessRoute('Owner', 'calendar'), true)
+    assert.equal(canAccessRoute('Owner', 'analytics'), true)
     assert.equal(canManageTeam('Owner'), true)
   })
 
   it('keeps counselors out of finance and settings', () => {
     assert.equal(canAccessRoute('Counselor', 'crm'), true)
     assert.equal(canAccessRoute('Counselor', 'financials'), false)
+    assert.equal(canAccessRoute('Counselor', 'analytics'), false)
     assert.equal(canAccessRoute('Counselor', 'settings'), false)
     assert.equal(canUseDangerousAdminControls('Counselor'), false)
   })
@@ -36,6 +38,7 @@ describe('rbac helpers', () => {
     assert.equal(canAccessAppPath('Receptionist', 'Active', '/app/demo/students/abc', 'demo'), true)
     assert.equal(canAccessAppPath('Receptionist', 'Active', '/app/demo/financials', 'demo'), false)
     assert.equal(canAccessAppPath('Counselor', 'Active', '/app/demo/calendar', 'demo'), true)
+    assert.equal(canAccessAppPath('Manager', 'Active', '/app/demo/analytics', 'demo'), true)
     assert.equal(canAccessAppPath('Owner', 'Active', '/app/demo/settings', 'demo'), true)
   })
 })
