@@ -239,6 +239,21 @@ create table if not exists audit_logs (
   created_at      timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- 11h. Commission Payouts
+create table if not exists commission_payouts (
+  id                  uuid primary key default uuid_generate_v4(),
+  agency_id           uuid references agencies(id) on delete cascade not null,
+  pipeline_id         uuid references application_pipeline(id) on delete cascade not null,
+  sub_agent_id        uuid references sub_agents(id) on delete set null,
+  university_amount   numeric default 0 not null,
+  sub_agent_amount    numeric default 0 not null,
+  status              text check (status in ('Pending', 'Received', 'Paid', 'Cancelled')) default 'Pending' not null,
+  payout_date         date,
+  notes               text,
+  created_at          timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at          timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 -- 12. Website Content CMS
 create table if not exists website_content (
   id              uuid primary key default uuid_generate_v4(),
@@ -301,6 +316,7 @@ alter table student_work_experiences enable row level security;
 alter table student_visa_histories enable row level security;
 alter table sub_agents enable row level security;
 alter table audit_logs enable row level security;
+alter table commission_payouts enable row level security;
 alter table website_content enable row level security;
 alter table student_tracking_uploads enable row level security;
 
@@ -426,6 +442,11 @@ create policy "Agency members read audit logs" on audit_logs
   for select using (agency_id = get_user_agency_id());
 create policy "Agency members insert audit logs" on audit_logs
   for insert with check (agency_id = get_user_agency_id());
+
+drop policy if exists "Agency members manage commission payouts" on commission_payouts;
+create policy "Agency members manage commission payouts" on commission_payouts
+  for all using (agency_id = get_user_agency_id())
+  with check (agency_id = get_user_agency_id());
 
 -- Policies for Website Content
 drop policy if exists "Agency members manage website content" on website_content;
@@ -891,3 +912,28 @@ create policy "Agency members manage sub agents" on sub_agents
 
 create index if not exists sub_agents_agency_idx on sub_agents (agency_id, status);
 create index if not exists student_profiles_sub_agent_idx on student_profiles (agency_id, sub_agent_id);
+
+-- 25. Commission And Payout Tracking
+-- Run this appended block only on existing databases.
+create table if not exists commission_payouts (
+  id                  uuid primary key default uuid_generate_v4(),
+  agency_id           uuid references agencies(id) on delete cascade not null,
+  pipeline_id         uuid references application_pipeline(id) on delete cascade not null,
+  sub_agent_id        uuid references sub_agents(id) on delete set null,
+  university_amount   numeric default 0 not null,
+  sub_agent_amount    numeric default 0 not null,
+  status              text check (status in ('Pending', 'Received', 'Paid', 'Cancelled')) default 'Pending' not null,
+  payout_date         date,
+  notes               text,
+  created_at          timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at          timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table commission_payouts enable row level security;
+
+drop policy if exists "Agency members manage commission payouts" on commission_payouts;
+create policy "Agency members manage commission payouts" on commission_payouts
+  for all using (agency_id = get_user_agency_id())
+  with check (agency_id = get_user_agency_id());
+
+create index if not exists commission_payouts_agency_status_idx on commission_payouts (agency_id, status);
