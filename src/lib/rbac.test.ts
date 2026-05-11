@@ -8,6 +8,7 @@ describe('rbac helpers', () => {
     assert.equal(canAccessRoute('Owner', 'settings'), true)
     assert.equal(canAccessRoute('Owner', 'calendar'), true)
     assert.equal(canAccessRoute('Owner', 'analytics'), true)
+    assert.equal(canAccessRoute('Owner', 'sub-agents'), true)
     assert.equal(canManageTeam('Owner'), true)
   })
 
@@ -15,6 +16,7 @@ describe('rbac helpers', () => {
     assert.equal(canAccessRoute('Counselor', 'crm'), true)
     assert.equal(canAccessRoute('Counselor', 'financials'), false)
     assert.equal(canAccessRoute('Counselor', 'analytics'), false)
+    assert.equal(canAccessRoute('Counselor', 'sub-agents'), false)
     assert.equal(canAccessRoute('Counselor', 'settings'), false)
     assert.equal(canUseDangerousAdminControls('Counselor'), false)
   })

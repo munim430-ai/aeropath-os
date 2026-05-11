@@ -214,7 +214,20 @@ create table if not exists student_visa_histories (
   created_at      timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 11f. Audit Logs
+-- 11f. Sub-Agent Partners
+create table if not exists sub_agents (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade not null,
+  name            text not null,
+  contact_name    text,
+  email           text,
+  phone           text,
+  status          text check (status in ('Active', 'Disabled')) default 'Active' not null,
+  commission_rate numeric default 0 not null,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 11g. Audit Logs
 create table if not exists audit_logs (
   id              uuid primary key default uuid_generate_v4(),
   agency_id       uuid references agencies(id) on delete cascade not null,
@@ -267,6 +280,7 @@ alter table student_profiles add column if not exists listening_score numeric;
 alter table student_profiles add column if not exists reading_score numeric;
 alter table student_profiles add column if not exists writing_score numeric;
 alter table student_profiles add column if not exists speaking_score numeric;
+alter table student_profiles add column if not exists sub_agent_id uuid references sub_agents(id) on delete set null;
 
 -- ROW LEVEL SECURITY (RLS) POLICIES
 
@@ -285,6 +299,7 @@ alter table hrm_attendance enable row level security;
 alter table staff_invites enable row level security;
 alter table student_work_experiences enable row level security;
 alter table student_visa_histories enable row level security;
+alter table sub_agents enable row level security;
 alter table audit_logs enable row level security;
 alter table website_content enable row level security;
 alter table student_tracking_uploads enable row level security;
@@ -397,6 +412,11 @@ create policy "Agency members manage student work experiences" on student_work_e
   for all using (agency_id = get_user_agency_id())
   with check (agency_id = get_user_agency_id());
 create policy "Agency members manage student visa histories" on student_visa_histories
+  for all using (agency_id = get_user_agency_id())
+  with check (agency_id = get_user_agency_id());
+
+drop policy if exists "Agency members manage sub agents" on sub_agents;
+create policy "Agency members manage sub agents" on sub_agents
   for all using (agency_id = get_user_agency_id())
   with check (agency_id = get_user_agency_id());
 
@@ -845,3 +865,29 @@ create index if not exists student_visa_histories_student_idx on student_visa_hi
 alter table sales_leads drop constraint if exists sales_leads_source_check;
 alter table sales_leads add constraint sales_leads_source_check
   check (source in ('Website', 'Facebook', 'Instagram', 'YouTube', 'TikTok', 'Walk-in', 'Referral', 'Phone', 'Other'));
+
+-- 24. Sub-Agent Portal
+-- Run this appended block only on existing databases.
+create table if not exists sub_agents (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade not null,
+  name            text not null,
+  contact_name    text,
+  email           text,
+  phone           text,
+  status          text check (status in ('Active', 'Disabled')) default 'Active' not null,
+  commission_rate numeric default 0 not null,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table student_profiles add column if not exists sub_agent_id uuid references sub_agents(id) on delete set null;
+
+alter table sub_agents enable row level security;
+
+drop policy if exists "Agency members manage sub agents" on sub_agents;
+create policy "Agency members manage sub agents" on sub_agents
+  for all using (agency_id = get_user_agency_id())
+  with check (agency_id = get_user_agency_id());
+
+create index if not exists sub_agents_agency_idx on sub_agents (agency_id, status);
+create index if not exists student_profiles_sub_agent_idx on student_profiles (agency_id, sub_agent_id);

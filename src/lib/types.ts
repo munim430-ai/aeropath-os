@@ -55,6 +55,7 @@ export interface StudentProfile {
   id: string
   agency_id: string
   user_id: string | null
+  sub_agent_id?: string | null
   full_name: string
   phone: string | null
   date_of_birth?: string | null
@@ -77,6 +78,18 @@ export interface StudentProfile {
   reading_score?: number | null
   writing_score?: number | null
   speaking_score?: number | null
+  created_at: string
+}
+
+export interface SubAgent {
+  id: string
+  agency_id: string
+  name: string
+  contact_name: string | null
+  email: string | null
+  phone: string | null
+  status: 'Active' | 'Disabled'
+  commission_rate: number
   created_at: string
 }
 
