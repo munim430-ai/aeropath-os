@@ -4,6 +4,7 @@ import {
   calculateLeadScore,
   validateLeadConversion,
   validateLeadInput,
+  validateLeadSource,
 } from './crm'
 
 test('calculateLeadScore returns a low score for a basic lead', () => {
@@ -64,6 +65,12 @@ test('validateLeadInput accepts a valid manual lead', () => {
 
   assert.equal(result.valid, true)
   assert.deepEqual(result.errors, [])
+})
+
+test('validateLeadSource accepts social video lead sources', () => {
+  assert.equal(validateLeadSource('Instagram'), 'Instagram')
+  assert.equal(validateLeadSource('YouTube'), 'YouTube')
+  assert.equal(validateLeadSource('TikTok'), 'TikTok')
 })
 
 test('validateLeadConversion requires a university', () => {

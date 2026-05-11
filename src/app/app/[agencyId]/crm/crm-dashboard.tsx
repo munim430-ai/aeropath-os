@@ -80,6 +80,9 @@ const STATUS_COLORS: Record<LeadStatus, string> = {
 const SOURCE_COLORS: Record<LeadSource, string> = {
   Website: '#22c55e',
   Facebook: '#3b82f6',
+  Instagram: '#ec4899',
+  YouTube: '#ef4444',
+  TikTok: '#06b6d4',
   'Walk-in': '#f97316',
   Referral: '#a855f7',
   Phone: '#14b8a6',

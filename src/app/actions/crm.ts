@@ -8,12 +8,13 @@ import {
   normalizeNullableText,
   validateLeadConversion,
   validateLeadInput,
+  validateLeadSource,
 } from '@/lib/crm'
 import { getChecklistTemplateForCountry } from '@/lib/visa-operations'
-import type { LeadSource, LeadStatus, SalesLead, TaskDispatcher } from '@/lib/types'
+import type { LeadStatus, SalesLead, TaskDispatcher } from '@/lib/types'
 
 function getLeadPayload(formData: FormData, status: LeadStatus = 'New') {
-  const source = (normalizeNullableText(formData.get('source')) ?? 'Website') as LeadSource
+  const source = validateLeadSource(normalizeNullableText(formData.get('source'))) ?? 'Website'
   const assignedTo = normalizeNullableText(formData.get('assigned_to_id'))
   const payload = {
     full_name: normalizeNullableText(formData.get('full_name')),

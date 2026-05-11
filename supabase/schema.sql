@@ -563,7 +563,7 @@ create table if not exists sales_leads (
   email                 text,
   phone                 text,
   whatsapp_number       text,
-  source                text check (source in ('Website', 'Facebook', 'Walk-in', 'Referral', 'Phone', 'Other')) default 'Website' not null,
+  source                text check (source in ('Website', 'Facebook', 'Instagram', 'YouTube', 'TikTok', 'Walk-in', 'Referral', 'Phone', 'Other')) default 'Website' not null,
   status                text check (status in ('New', 'Contacted', 'Qualified', 'Converted', 'Lost')) default 'New' not null,
   score                 integer check (score >= 0 and score <= 100) default 10 not null,
   preferred_country     text,
@@ -839,3 +839,9 @@ create policy "Agency members manage student visa histories" on student_visa_his
 
 create index if not exists student_work_experiences_student_idx on student_work_experiences (agency_id, student_id);
 create index if not exists student_visa_histories_student_idx on student_visa_histories (agency_id, student_id);
+
+-- 23. CRM Source Expansion
+-- Run this appended block only on existing databases.
+alter table sales_leads drop constraint if exists sales_leads_source_check;
+alter table sales_leads add constraint sales_leads_source_check
+  check (source in ('Website', 'Facebook', 'Instagram', 'YouTube', 'TikTok', 'Walk-in', 'Referral', 'Phone', 'Other'));

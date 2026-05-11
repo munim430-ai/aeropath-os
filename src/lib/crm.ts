@@ -3,6 +3,9 @@ import type { LeadSource, LeadStatus } from './types'
 export const LEAD_SOURCES: LeadSource[] = [
   'Website',
   'Facebook',
+  'Instagram',
+  'YouTube',
+  'TikTok',
   'Walk-in',
   'Referral',
   'Phone',
@@ -50,6 +53,11 @@ export function calculateLeadScore(input: LeadScoreInput) {
   return Math.min(100, Math.max(0, score))
 }
 
+export function validateLeadSource(source: string | null | undefined): LeadSource | null {
+  if (!source) return null
+  return LEAD_SOURCES.includes(source as LeadSource) ? (source as LeadSource) : null
+}
+
 export function validateLeadInput(input: LeadValidationInput) {
   const errors: string[] = []
 
@@ -61,7 +69,7 @@ export function validateLeadInput(input: LeadValidationInput) {
     errors.push('Phone or email is required')
   }
 
-  if (input.source && !LEAD_SOURCES.includes(input.source as LeadSource)) {
+  if (input.source && !validateLeadSource(input.source)) {
     errors.push('Invalid lead source')
   }
 

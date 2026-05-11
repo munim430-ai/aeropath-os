@@ -13,7 +13,16 @@ export type DocumentType = 'Passport' | 'Transcript' | 'IELTS' | 'CV' | 'Other'
 
 export type FinancialStatus = 'Pending' | 'Received' | 'Cancelled'
 
-export type LeadSource = 'Website' | 'Facebook' | 'Walk-in' | 'Referral' | 'Phone' | 'Other'
+export type LeadSource =
+  | 'Website'
+  | 'Facebook'
+  | 'Instagram'
+  | 'YouTube'
+  | 'TikTok'
+  | 'Walk-in'
+  | 'Referral'
+  | 'Phone'
+  | 'Other'
 
 export type LeadStatus = 'New' | 'Contacted' | 'Qualified' | 'Converted' | 'Lost'
 
