@@ -36,6 +36,7 @@ create table if not exists student_profiles (
   full_name       text not null,
   email           text,
   phone           text,
+  date_of_birth   date,
   nationality     text,
   degree_level    text,
   gpa             numeric,
@@ -43,6 +44,17 @@ create table if not exists student_profiles (
   whatsapp_number text,
   preferred_country text,
   preferred_intake  text,
+  ssc_gpa         numeric,
+  ssc_passing_year integer,
+  hsc_gpa         numeric,
+  hsc_passing_year integer,
+  preferred_subject text,
+  test_type       text check (test_type in ('IELTS', 'PTE', 'TOEFL', 'TOPIK', 'Other')),
+  overall_test_score numeric,
+  listening_score numeric,
+  reading_score   numeric,
+  writing_score   numeric,
+  speaking_score  numeric,
   created_at      timestamp with time zone default now() not null
 );
 
@@ -179,7 +191,30 @@ create table if not exists staff_invites (
   unique (agency_id, email)
 );
 
--- 11e. Audit Logs
+-- 11e. Student Profile Experience & Visa History
+create table if not exists student_work_experiences (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade not null,
+  student_id      uuid references student_profiles(id) on delete cascade not null,
+  company_name    text not null,
+  designation     text,
+  period          text,
+  certificate_url text,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create table if not exists student_visa_histories (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade not null,
+  student_id      uuid references student_profiles(id) on delete cascade not null,
+  country_name    text not null,
+  visa_category   text,
+  outcome         text check (outcome in ('Approved', 'Rejected', 'Pending', 'Withdrawn')) not null,
+  year            integer,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 11f. Audit Logs
 create table if not exists audit_logs (
   id              uuid primary key default uuid_generate_v4(),
   agency_id       uuid references agencies(id) on delete cascade not null,
@@ -219,6 +254,19 @@ alter table student_profiles add column if not exists whatsapp_number text;
 alter table student_profiles add column if not exists preferred_country text;
 alter table student_profiles add column if not exists preferred_intake text;
 alter table student_profiles add column if not exists user_id uuid references users(id) on delete set null;
+alter table student_profiles add column if not exists date_of_birth date;
+alter table student_profiles add column if not exists ssc_gpa numeric;
+alter table student_profiles add column if not exists ssc_passing_year integer;
+alter table student_profiles add column if not exists hsc_gpa numeric;
+alter table student_profiles add column if not exists hsc_passing_year integer;
+alter table student_profiles add column if not exists preferred_subject text;
+alter table student_profiles add column if not exists test_type text
+  check (test_type in ('IELTS', 'PTE', 'TOEFL', 'TOPIK', 'Other'));
+alter table student_profiles add column if not exists overall_test_score numeric;
+alter table student_profiles add column if not exists listening_score numeric;
+alter table student_profiles add column if not exists reading_score numeric;
+alter table student_profiles add column if not exists writing_score numeric;
+alter table student_profiles add column if not exists speaking_score numeric;
 
 -- ROW LEVEL SECURITY (RLS) POLICIES
 
@@ -235,6 +283,8 @@ alter table bank_transactions enable row level security;
 alter table student_payments enable row level security;
 alter table hrm_attendance enable row level security;
 alter table staff_invites enable row level security;
+alter table student_work_experiences enable row level security;
+alter table student_visa_histories enable row level security;
 alter table audit_logs enable row level security;
 alter table website_content enable row level security;
 alter table student_tracking_uploads enable row level security;
@@ -338,6 +388,15 @@ drop policy if exists "Agency owners manage staff invites" on staff_invites;
 create policy "Agency members read staff invites" on staff_invites
   for select using (agency_id = get_user_agency_id());
 create policy "Agency owners manage staff invites" on staff_invites
+  for all using (agency_id = get_user_agency_id())
+  with check (agency_id = get_user_agency_id());
+
+drop policy if exists "Agency members manage student work experiences" on student_work_experiences;
+drop policy if exists "Agency members manage student visa histories" on student_visa_histories;
+create policy "Agency members manage student work experiences" on student_work_experiences
+  for all using (agency_id = get_user_agency_id())
+  with check (agency_id = get_user_agency_id());
+create policy "Agency members manage student visa histories" on student_visa_histories
   for all using (agency_id = get_user_agency_id())
   with check (agency_id = get_user_agency_id());
 
@@ -727,3 +786,56 @@ create policy "Agency members insert audit logs" on audit_logs
 
 create index if not exists audit_logs_agency_created_idx on audit_logs (agency_id, created_at desc);
 create index if not exists audit_logs_entity_idx on audit_logs (entity_type, entity_id);
+
+-- 22. Student Profile Expansion
+-- Run this appended block only on existing databases.
+alter table student_profiles add column if not exists date_of_birth date;
+alter table student_profiles add column if not exists ssc_gpa numeric;
+alter table student_profiles add column if not exists ssc_passing_year integer;
+alter table student_profiles add column if not exists hsc_gpa numeric;
+alter table student_profiles add column if not exists hsc_passing_year integer;
+alter table student_profiles add column if not exists preferred_subject text;
+alter table student_profiles add column if not exists test_type text
+  check (test_type in ('IELTS', 'PTE', 'TOEFL', 'TOPIK', 'Other'));
+alter table student_profiles add column if not exists overall_test_score numeric;
+alter table student_profiles add column if not exists listening_score numeric;
+alter table student_profiles add column if not exists reading_score numeric;
+alter table student_profiles add column if not exists writing_score numeric;
+alter table student_profiles add column if not exists speaking_score numeric;
+
+create table if not exists student_work_experiences (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade not null,
+  student_id      uuid references student_profiles(id) on delete cascade not null,
+  company_name    text not null,
+  designation     text,
+  period          text,
+  certificate_url text,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create table if not exists student_visa_histories (
+  id              uuid primary key default uuid_generate_v4(),
+  agency_id       uuid references agencies(id) on delete cascade not null,
+  student_id      uuid references student_profiles(id) on delete cascade not null,
+  country_name    text not null,
+  visa_category   text,
+  outcome         text check (outcome in ('Approved', 'Rejected', 'Pending', 'Withdrawn')) not null,
+  year            integer,
+  created_at      timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table student_work_experiences enable row level security;
+alter table student_visa_histories enable row level security;
+
+drop policy if exists "Agency members manage student work experiences" on student_work_experiences;
+drop policy if exists "Agency members manage student visa histories" on student_visa_histories;
+create policy "Agency members manage student work experiences" on student_work_experiences
+  for all using (agency_id = get_user_agency_id())
+  with check (agency_id = get_user_agency_id());
+create policy "Agency members manage student visa histories" on student_visa_histories
+  for all using (agency_id = get_user_agency_id())
+  with check (agency_id = get_user_agency_id());
+
+create index if not exists student_work_experiences_student_idx on student_work_experiences (agency_id, student_id);
+create index if not exists student_visa_histories_student_idx on student_visa_histories (agency_id, student_id);

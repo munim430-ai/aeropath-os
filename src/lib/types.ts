@@ -48,6 +48,7 @@ export interface StudentProfile {
   user_id: string | null
   full_name: string
   phone: string | null
+  date_of_birth?: string | null
   degree_level: string | null
   gpa: number | null
   ielts_score: number | null
@@ -56,6 +57,39 @@ export interface StudentProfile {
   whatsapp_number: string | null
   preferred_country: string | null
   preferred_intake: string | null
+  ssc_gpa?: number | null
+  ssc_passing_year?: number | null
+  hsc_gpa?: number | null
+  hsc_passing_year?: number | null
+  preferred_subject?: string | null
+  test_type?: 'IELTS' | 'PTE' | 'TOEFL' | 'TOPIK' | 'Other' | null
+  overall_test_score?: number | null
+  listening_score?: number | null
+  reading_score?: number | null
+  writing_score?: number | null
+  speaking_score?: number | null
+  created_at: string
+}
+
+export interface StudentWorkExperience {
+  id: string
+  agency_id: string
+  student_id: string
+  company_name: string
+  designation: string | null
+  period: string | null
+  certificate_url: string | null
+  created_at: string
+}
+
+export interface StudentVisaHistory {
+  id: string
+  agency_id: string
+  student_id: string
+  country_name: string
+  visa_category: string | null
+  outcome: 'Approved' | 'Rejected' | 'Pending' | 'Withdrawn'
+  year: number | null
   created_at: string
 }
 

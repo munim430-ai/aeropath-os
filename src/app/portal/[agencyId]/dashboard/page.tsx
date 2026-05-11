@@ -15,9 +15,9 @@ import { createAdminClient, createClient } from '@/lib/supabase/server'
 import {
   getCurrentDocumentVersions,
   getMissingDocumentTypes,
-  getStudentProfileCompletion,
   normalizePortalEmail,
 } from '@/lib/student-portal'
+import { buildStudentProfileCompletion } from '@/lib/student-profile'
 import { formatDate } from '@/lib/utils'
 import type { ApplicationPipeline, DocumentVault, StudentProfile } from '@/lib/types'
 import { StudentProfileForm } from './student-profile-form'
@@ -93,7 +93,7 @@ export default async function StudentPortalDashboardPage({
     )
   }
 
-  const [documentsResult, applicationsResult] = await Promise.all([
+  const [documentsResult, applicationsResult, workResult, visaResult] = await Promise.all([
     admin
       .from('document_vault')
       .select('*, version_number, is_current, uploaded_by')
@@ -106,13 +106,29 @@ export default async function StudentPortalDashboardPage({
       .eq('agency_id', agency.id)
       .eq('student_id', student.id)
       .order('created_at', { ascending: false }),
+    admin
+      .from('student_work_experiences')
+      .select('*')
+      .eq('agency_id', agency.id)
+      .eq('student_id', student.id)
+      .order('created_at', { ascending: false }),
+    admin
+      .from('student_visa_histories')
+      .select('*')
+      .eq('agency_id', agency.id)
+      .eq('student_id', student.id)
+      .order('created_at', { ascending: false }),
   ])
 
   const documents = (documentsResult.data ?? []) as PortalDocument[]
   const applications = (applicationsResult.data ?? []) as PortalApplication[]
   const currentDocuments = getCurrentDocumentVersions(documents)
   const missingDocuments = getMissingDocumentTypes(documents)
-  const completion = getStudentProfileCompletion(student as StudentProfile)
+  const completion = buildStudentProfileCompletion({
+    ...(student as StudentProfile),
+    work_experiences: workResult.data ?? [],
+    visa_histories: visaResult.data ?? [],
+  })
   const latestApplication = applications[0]
   const currentStageIndex = latestApplication ? PORTAL_STAGES.indexOf(latestApplication.stage) : -1
 

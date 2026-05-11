@@ -32,6 +32,19 @@ export default async function StudentProfilePage({
     .eq('student_id', studentId)
     .order('created_at', { ascending: false })
 
+  const [{ data: workExperiences }, { data: visaHistories }] = await Promise.all([
+    supabase
+      .from('student_work_experiences')
+      .select('*')
+      .eq('student_id', studentId)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('student_visa_histories')
+      .select('*')
+      .eq('student_id', studentId)
+      .order('created_at', { ascending: false }),
+  ])
+
   const eligible = eligibility.filter((e) => e.eligible)
   const ineligible = eligibility.filter((e) => !e.eligible)
 
@@ -79,7 +92,9 @@ export default async function StudentProfilePage({
                   { label: 'Email', value: student.email },
                   { label: 'Phone', value: student.phone },
                   { label: 'WhatsApp', value: student.whatsapp_number },
+                  { label: 'Date of Birth', value: student.date_of_birth ? formatDate(student.date_of_birth) : null },
                   { label: 'Target Country', value: student.preferred_country },
+                  { label: 'Preferred Subject', value: student.preferred_subject },
                   { label: 'Nationality', value: student.nationality },
                   { label: 'Degree Level', value: student.degree_level },
                   { label: 'GPA', value: student.gpa != null ? student.gpa.toString() : null },
@@ -87,10 +102,73 @@ export default async function StudentProfilePage({
                 ].map(({ label, value }) => (
                   <div key={label}>
                     <dt className="text-xs text-[#606060]">{label}</dt>
+                    <dd className="text-sm text-[#F5F5F5] mt-0.5">{value || '-'}</dd>
+                  </div>
+                ))}
+              </dl>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Academics & Tests</CardTitle></CardHeader>
+            <CardContent>
+              <dl className="space-y-3">
+                {[
+                  { label: 'SSC', value: formatAcademic(student.ssc_gpa, student.ssc_passing_year) },
+                  { label: 'HSC', value: formatAcademic(student.hsc_gpa, student.hsc_passing_year) },
+                  { label: 'Test Type', value: student.test_type },
+                  { label: 'Overall Score', value: student.overall_test_score != null ? student.overall_test_score.toString() : null },
+                  { label: 'Listening', value: student.listening_score != null ? student.listening_score.toString() : null },
+                  { label: 'Reading', value: student.reading_score != null ? student.reading_score.toString() : null },
+                  { label: 'Writing', value: student.writing_score != null ? student.writing_score.toString() : null },
+                  { label: 'Speaking', value: student.speaking_score != null ? student.speaking_score.toString() : null },
+                ].map(({ label, value }) => (
+                  <div key={label}>
+                    <dt className="text-xs text-[#606060]">{label}</dt>
                     <dd className="text-sm text-[#F5F5F5] mt-0.5">{value || '—'}</dd>
                   </div>
                 ))}
               </dl>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Work Experience</CardTitle></CardHeader>
+            <CardContent>
+              {!workExperiences?.length ? (
+                <p className="text-xs text-[#606060] py-2">No work experience recorded</p>
+              ) : (
+                <ul className="space-y-2">
+                  {workExperiences.map((experience) => (
+                    <li key={experience.id} className="rounded-[6px] bg-[#1A1A1A] p-3">
+                      <p className="text-sm font-medium text-[#F5F5F5]">{experience.company_name}</p>
+                      <p className="text-xs text-[#606060]">
+                        {[experience.designation, experience.period].filter(Boolean).join(' • ') || 'No designation/period set'}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Visa History</CardTitle></CardHeader>
+            <CardContent>
+              {!visaHistories?.length ? (
+                <p className="text-xs text-[#606060] py-2">No visa history recorded</p>
+              ) : (
+                <ul className="space-y-2">
+                  {visaHistories.map((history) => (
+                    <li key={history.id} className="rounded-[6px] bg-[#1A1A1A] p-3">
+                      <p className="text-sm font-medium text-[#F5F5F5]">{history.country_name}</p>
+                      <p className="text-xs text-[#606060]">
+                        {[history.visa_category, history.outcome, history.year].filter(Boolean).join(' • ')}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </CardContent>
           </Card>
 
@@ -178,4 +256,9 @@ export default async function StudentProfilePage({
       </div>
     </div>
   )
+}
+
+function formatAcademic(gpa?: number | null, year?: number | null) {
+  if (gpa == null && year == null) return null
+  return [gpa != null ? `GPA ${gpa}` : null, year ? `Year ${year}` : null].filter(Boolean).join(' / ')
 }

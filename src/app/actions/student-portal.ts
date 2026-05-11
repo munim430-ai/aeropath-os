@@ -6,10 +6,10 @@ import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import {
   buildStudentPortalRedirectUrl,
-  buildStudentProfileUpdate,
   mapStudentMagicLinkError,
   normalizePortalEmail,
 } from '@/lib/student-portal'
+import { buildStudentProfileUpdatePayload } from '@/lib/student-profile'
 
 type ActionResult = {
   error?: string
@@ -110,7 +110,7 @@ export async function updateStudentPortalProfile(
 
   const { error } = await admin
     .from('student_profiles')
-    .update(buildStudentProfileUpdate(formData))
+    .update(buildStudentProfileUpdatePayload(formData))
     .eq('agency_id', agency.id)
     .eq('id', student.id)
 
